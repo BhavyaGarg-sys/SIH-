@@ -1,0 +1,35 @@
+# Core Math & Data Libraries
+numpy
+pandas
+scipy
+scikit-learn
+
+# ML, Transformers & Embeddings
+torch
+transformers
+sentence-transformers
+faiss-cpu
+
+# Document Processing
+pymupdf
+pypdf
+
+# LangChain Abstractions (Core & Splitters only)
+langchain-core
+langchain-text-splitters
+
+# Minimal LLM Provider Integrations (Supported by LLMWrapper)
+langchain-openai
+langchain-google-genai
+
+# API Framework
+fastapi
+uvicorn
+pydantic
+
+# Utilities & Configuration
+python-dotenv
+tqdm
+
+# Testing
+pytest
