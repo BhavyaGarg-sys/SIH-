@@ -30,6 +30,7 @@ pydantic
 # Utilities & Configuration
 python-dotenv
 tqdm
+redis
 
 # Testing
 pytest
