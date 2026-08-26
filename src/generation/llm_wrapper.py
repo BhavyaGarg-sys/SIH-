@@ -71,7 +71,17 @@ class LLMWrapper:
             try:
                 response = self._llm.invoke(prompt)
                 if hasattr(response, "content"):
-                    return str(response.content)
+                    content = response.content
+                    if isinstance(content, list):
+                        # Extract text from block list and join
+                        texts = []
+                        for block in content:
+                            if isinstance(block, dict) and 'text' in block:
+                                texts.append(block['text'])
+                            elif isinstance(block, str):
+                                texts.append(block)
+                        return "\n".join(texts)
+                    return str(content)
                 return str(response)
             except Exception as e:
                 logger.error(f"Error invoking LLM provider '{self.provider}': {e}")

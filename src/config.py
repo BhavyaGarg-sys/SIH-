@@ -1,4 +1,5 @@
 import os
+import torch
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -17,11 +18,24 @@ class Config:
     VECTORSTORE_PATH: Path = BASE_DIR / os.getenv("VECTORSTORE_PATH", "data/vectorstore")
 
     # Embedding Model Settings
-    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
+    EMBEDDING_BATCH_SIZE: int = int(os.getenv("EMBEDDING_BATCH_SIZE", "32"))
+
+    # Compute Device (Auto-detect CUDA, MPS or CPU)
+    @property
+    def DEVICE(self) -> str:
+        env_device = os.getenv("DEVICE", "").lower()
+        if env_device and env_device != "auto":
+            return env_device
+        if torch.cuda.is_available():
+            return "cuda"
+        elif torch.backends.mps.is_available():
+            return "mps"
+        return "cpu"
 
     # Text Chunking Settings
-    CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "500"))
-    CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "50"))
+    CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "1000"))
+    CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "150"))
 
     # Retrieval Settings
     TOP_K: int = int(os.getenv("TOP_K", "4"))
