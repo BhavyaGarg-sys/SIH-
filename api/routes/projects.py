@@ -17,12 +17,14 @@ def serialize_project(doc) -> ProjectResponse:
         standard_id=doc["standard_id"],
         scheme_id=doc["scheme_id"],
         progress_percentage=doc.get("progress_percentage", 0),
+        status=doc.get("status", "PLANNING"),
         steps=[ChecklistStep(**step) for step in doc.get("steps", [])],
         saved_labs=doc.get("saved_labs", [])
     )
 
 from pydantic import BaseModel
 from api.services.rag_service import generate_rag_response
+from api.schemas.projects import ProjectStatusUpdate
 
 class ProjectGenerateRequest(BaseModel):
     product: str
@@ -55,6 +57,7 @@ async def generate_project(request: ProjectGenerateRequest, user: dict = Depends
         "standard_id": standard_id,
         "scheme_id": "CRS",
         "progress_percentage": 0,
+        "status": "PLANNING",
         "steps": steps,
         "saved_labs": [],
         "created_at": datetime.utcnow()
@@ -99,6 +102,7 @@ async def create_project(project: ProjectCreate, user: dict = Depends(get_curren
         "standard_id": project.standard_id,
         "scheme_id": project.scheme_id,
         "progress_percentage": 0,
+        "status": "PLANNING",
         "steps": steps,
         "saved_labs": [],
         "created_at": datetime.utcnow()
@@ -142,6 +146,60 @@ async def get_project(project_id: str, user: dict = Depends(get_current_user)):
         
     return serialize_project(project)
 
+@router.patch("/{project_id}", response_model=dict)
+async def update_project_status(project_id: str, update: ProjectStatusUpdate, user: dict = Depends(get_current_user)):
+    db = get_database()
+    try:
+        obj_id = ObjectId(project_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid project ID format")
+        
+    result = await db.projects.update_one(
+        {"_id": obj_id, "user_id": user["id"]},
+        {"$set": {"status": update.status}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    return {"status": "success", "new_status": update.status}
+
+@router.post("/{project_id}/duplicate", response_model=ProjectResponse)
+async def duplicate_project(project_id: str, user: dict = Depends(get_current_user)):
+    db = get_database()
+    try:
+        obj_id = ObjectId(project_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid project ID format")
+        
+    source_project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
+    if not source_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    # Reset steps to PENDING
+    new_steps = []
+    for step in source_project.get("steps", []):
+        new_step = step.copy()
+        new_step["status"] = "PENDING"
+        new_steps.append(new_step)
+        
+    new_project = {
+        "user_id": user["id"],
+        "title": source_project.get("title", "Project") + " (Copy)",
+        "standard_id": source_project.get("standard_id", ""),
+        "scheme_id": source_project.get("scheme_id", ""),
+        "progress_percentage": 0,
+        "status": "PLANNING",
+        "steps": new_steps,
+        "saved_labs": source_project.get("saved_labs", []),
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.projects.insert_one(new_project)
+    new_project["_id"] = result.inserted_id
+    
+    return serialize_project(new_project)
+
 @router.patch("/{project_id}/checklist/{step_id}", response_model=dict)
 async def update_step_status(project_id: str, step_id: str, update: StepUpdate, user: dict = Depends(get_current_user)):
     db = get_database()
@@ -163,12 +221,15 @@ async def update_step_status(project_id: str, step_id: str, update: StepUpdate, 
     
     for step in steps:
         if step["id"] == step_id:
-            step["status"] = update.status
+            if update.status is not None:
+                step["status"] = update.status
             if update.notes is not None:
                 step["notes"] = update.notes
+            if update.due_date is not None:
+                step["due_date"] = update.due_date
             step_found = True
             
-        if step["status"] == "COMPLETED":
+        if step.get("status") == "COMPLETED":
             completed_count += 1
             
     if not step_found:
@@ -181,8 +242,7 @@ async def update_step_status(project_id: str, step_id: str, update: StepUpdate, 
         {"_id": obj_id, "steps.id": step_id},
         {
             "$set": {
-                "steps.$.status": update.status,
-                "steps.$.notes": update.notes if update.notes is not None else "",
+                "steps.$": next(s for s in steps if s["id"] == step_id),
                 "progress_percentage": new_progress
             }
         }
@@ -196,6 +256,7 @@ async def update_step_status(project_id: str, step_id: str, update: StepUpdate, 
 
 class NewStepRequest(BaseModel):
     title: str
+    due_date: Optional[str] = None
 
 @router.post("/{project_id}/checklist", response_model=dict)
 async def add_checklist_step(project_id: str, request: NewStepRequest, user: dict = Depends(get_current_user)):
@@ -214,7 +275,8 @@ async def add_checklist_step(project_id: str, request: NewStepRequest, user: dic
     new_step = {
         "id": new_step_id,
         "title": request.title,
-        "status": "PENDING"
+        "status": "PENDING",
+        "due_date": request.due_date
     }
     
     steps = project.get("steps", [])

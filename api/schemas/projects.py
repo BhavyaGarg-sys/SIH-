@@ -6,6 +6,7 @@ class ChecklistStep(BaseModel):
     title: str
     status: str = "PENDING" # PENDING, IN_PROGRESS, COMPLETED
     notes: Optional[str] = None
+    due_date: Optional[str] = None
 
 class ProjectCreate(BaseModel):
     title: str
@@ -20,9 +21,14 @@ class ProjectResponse(BaseModel):
     standard_id: str
     scheme_id: str
     progress_percentage: int
+    status: str = "PLANNING"
     steps: List[ChecklistStep]
     saved_labs: List[dict] = []
 
 class StepUpdate(BaseModel):
-    status: str
+    status: Optional[str] = None
     notes: Optional[str] = None
+    due_date: Optional[str] = None
+
+class ProjectStatusUpdate(BaseModel):
+    status: str

@@ -1,13 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Send, Loader2, FileText, ChevronDown, ChevronUp, Bot, User, Plus, MessageSquare, Trash2, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Send, Loader2, FileText, ChevronDown, ChevronUp, Bot, User, Plus, MessageSquare, Trash2, ArrowRight, ShieldCheck, HelpCircle, Bookmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AppHeader from '../components/AppHeader';
 import { toast } from 'sonner';
 
 const generateId = () => {
   return window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'sess_' + Math.random().toString(36).substr(2, 9);
+};
+
+const SUGGESTIONS = {
+  CERTIFICATION: ["What documents do I need?", "How long does this take?", "Which labs can test this?"],
+  VERIFICATION:  ["Check another product", "What does this mark mean?", "Show me the QCO"],
+  GENERAL:       ["Is there a QCO for this?", "Which BIS scheme applies?", "Find related standards"],
 };
 
 export default function Chat() {
@@ -87,15 +93,14 @@ export default function Chat() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const sendMessage = async (messageText) => {
+    if (!messageText.trim()) return;
 
     setApiError(null);
     const currentSessionId = activeSessionId || generateId();
     if (!activeSessionId) setActiveSessionId(currentSessionId);
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage = { role: 'user', content: messageText };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -113,6 +118,7 @@ export default function Chat() {
         content: data.ai_text,
         ui_widget: data.ui_widget,
         citations: data.citations,
+        intent: data.intent
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -124,6 +130,11 @@ export default function Chat() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    sendMessage(input);
   };
 
   return (
@@ -298,6 +309,20 @@ export default function Chat() {
                     {msg.citations && msg.citations.length > 0 && (
                       <SourcesDropdown sources={msg.citations} />
                     )}
+                    
+                    {msg.role === 'assistant' && msg.intent && SUGGESTIONS[msg.intent] && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {SUGGESTIONS[msg.intent].map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => sendMessage(suggestion)}
+                            className="text-xs font-medium bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 px-3 py-1.5 rounded-full transition-colors shadow-sm"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -379,7 +404,7 @@ function SourcesDropdown({ sources }) {
         <div className="mt-2 space-y-2">
           {sources.map((src, idx) => (
             <div key={idx} className="bg-slate-50 border border-slate-200 border-l-2 border-l-blue-500 rounded-lg p-3 hover:shadow-sm transition-shadow">
-              <div className="mb-1">
+              <div className="mb-1 flex justify-between items-start">
                 <button 
                   onClick={() => {
                     const filename = (src.standard || src.source || "").split('/').pop().split('\\').pop();
@@ -389,6 +414,26 @@ function SourcesDropdown({ sources }) {
                 >
                   <FileText size={14} className="mt-0.5 flex-shrink-0" />
                   <span className="line-clamp-2">{src.standard || src.source || "Unknown Document"}</span>
+                </button>
+                <button 
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    try {
+                      await axios.post('http://localhost:8000/api/v1/bookmarks', {
+                        standard_ref: src.standard || src.source || "Unknown Document",
+                        clause_text: src.clause || src.snippet || "Relevant section",
+                        pdf_path: src.standard || src.source,
+                        page_number: src.page ? parseInt(src.page) : null
+                      });
+                      toast.success("Standard saved to Bookmarks!");
+                    } catch(err) {
+                      toast.error("Failed to save bookmark");
+                    }
+                  }}
+                  className="text-slate-400 hover:text-blue-600 transition-colors p-1"
+                  title="Bookmark this standard"
+                >
+                  <Bookmark size={14} />
                 </button>
               </div>
               <div className="flex gap-3 text-xs text-slate-500 font-medium ml-5">

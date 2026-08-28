@@ -13,3 +13,9 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class UserProfile(BaseModel):
+    company_name: Optional[str] = None
+    industry_sector: Optional[str] = None
+    state: Optional[str] = None
+    profile_complete: Optional[bool] = False
