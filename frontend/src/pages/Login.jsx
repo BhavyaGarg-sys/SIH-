@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './Auth.css';
+import { ShieldCheck, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -23,7 +23,7 @@ export default function Login() {
       } else {
         await register(email, password);
       }
-      navigate('/dashboard'); // Go to dashboard after success
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.detail || 'Authentication failed');
     } finally {
@@ -32,44 +32,98 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h2>BIS Intelligence</h2>
-          <p>{isLogin ? 'Sign in to your account' : 'Create a new account'}</p>
-        </div>
-        
-        {error && <div className="auth-error">{error}</div>}
-        
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label>Email Address</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-            />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+      
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+        <div className="p-8">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center">
+              <ShieldCheck className="w-8 h-8 text-blue-600" />
+            </div>
           </div>
           
-          <button type="submit" disabled={loading} className="auth-submit">
-            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
-          </button>
-        </form>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">BIS Intelligence</h2>
+            <p className="text-slate-500">{isLogin ? 'Welcome back! Please enter your details.' : 'Create an account to get started.'}</p>
+          </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-start">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors sm:text-sm"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors sm:text-sm"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+
+            {isLogin && (
+              <div className="flex items-center justify-end">
+                <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                  Forgot password?
+                </a>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <Loader2 className="animate-spin h-5 w-5 mr-2" />
+              ) : (
+                <>
+                  {isLogin ? 'Sign In' : 'Create Account'}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
         
-        <div className="auth-footer">
-          <button onClick={() => setIsLogin(!isLogin)} className="toggle-auth">
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-          </button>
+        <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 text-center">
+          <p className="text-sm text-slate-600">
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              {isLogin ? 'Sign up' : 'Sign in'}
+            </button>
+          </p>
         </div>
       </div>
     </div>

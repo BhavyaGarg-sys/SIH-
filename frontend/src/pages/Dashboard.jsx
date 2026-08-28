@@ -2,16 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, FolderKanban, CheckCircle, Loader2, Rocket } from 'lucide-react';
-import './Dashboard.css';
-
+import { PlusCircle, FolderKanban, CheckCircle, Loader2, Rocket, Clock, ArrowRight } from 'lucide-react';
 import AppHeader from '../components/AppHeader';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -23,10 +22,13 @@ export default function Dashboard() {
 
   const fetchProjects = async () => {
     try {
+      setLoading(true);
       const response = await axios.get('http://localhost:8000/api/v1/projects');
       setProjects(response.data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,77 +52,135 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <AppHeader />
 
-      <main className="dashboard-content" style={{ display: 'flex', gap: '30px', padding: '30px 40px', flex: 1 }}>
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
         
         {/* Left Side: Create New Workspace */}
-        <div style={{ flex: '0 0 350px', background: 'white', padding: '25px', borderRadius: '8px', border: '1px solid #e2e8f0', height: 'fit-content' }}>
-           <h2 style={{ margin: '0 0 10px 0', fontSize: '18px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <PlusCircle size={20} color="#2563eb" /> Create Workspace
-           </h2>
-           <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>Generate a new compliance project workspace.</p>
-           
-           <form onSubmit={handleStartCertification}>
-             <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Product Category</label>
-             <select name="product" required style={{ width: '100%', padding: '10px', marginBottom: '15px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
-               <option value="">Select Product...</option>
-               <option value="LED Bulbs">LED Bulbs</option>
-               <option value="Helmets">Two-Wheeler Helmets</option>
-               <option value="Smartwatches">Smartwatches</option>
-               <option value="Steel Tubes">Steel Tubes</option>
-             </select>
-             
-             <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Your Role</label>
-             <select name="role" style={{ width: '100%', padding: '10px', marginBottom: '20px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
-               <option value="Domestic Manufacturer">Domestic Manufacturer</option>
-               <option value="Foreign Manufacturer">Foreign Manufacturer</option>
-               <option value="Importer">Importer</option>
-             </select>
-             
-             <button type="submit" disabled={isGenerating} style={{ width: '100%', background: '#2563eb', color: 'white', border: 'none', padding: '12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-               {isGenerating ? <Loader2 className="spinner" size={18} /> : <Rocket size={18} />} 
-               {isGenerating ? 'Generating Workspace...' : 'Start Certification'}
-             </button>
-           </form>
+        <div className="w-full lg:w-96 flex-shrink-0">
+          <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm sticky top-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <PlusCircle size={24} />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">New Workspace</h2>
+            </div>
+            <p className="text-slate-500 text-sm mb-8">Generate a personalized compliance roadmap for your product.</p>
+            
+            <form onSubmit={handleStartCertification} className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Product Category</label>
+                <div className="relative">
+                  <select 
+                    name="product" 
+                    required 
+                    className="block w-full pl-4 pr-10 py-3 text-base border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors appearance-none cursor-pointer"
+                  >
+                    <option value="">Select a product...</option>
+                    <option value="LED Bulbs">LED Bulbs</option>
+                    <option value="Helmets">Two-Wheeler Helmets</option>
+                    <option value="Smartwatches">Smartwatches</option>
+                    <option value="Steel Tubes">Steel Tubes</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Your Role</label>
+                <div className="relative">
+                  <select 
+                    name="role" 
+                    className="block w-full pl-4 pr-10 py-3 text-base border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors appearance-none cursor-pointer"
+                  >
+                    <option value="Domestic Manufacturer">Domestic Manufacturer</option>
+                    <option value="Foreign Manufacturer">Foreign Manufacturer</option>
+                    <option value="Importer">Importer</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+              </div>
+              
+              <button 
+                type="submit" 
+                disabled={isGenerating} 
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-4 rounded-xl font-bold transition-all shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+              >
+                {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Rocket className="w-5 h-5" />} 
+                {isGenerating ? 'Generating...' : 'Start Certification'}
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* Right Side: Active Workspaces */}
-        <div style={{ flex: 1 }}>
-          <h2 style={{ margin: '0 0 20px 0', display: 'flex', alignItems: 'center', gap: '10px', color: '#1e293b' }}>
-            <FolderKanban size={24} color="#1e293b" /> Your Active Workspaces
-          </h2>
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+              <FolderKanban className="text-slate-700" size={28} /> 
+              Active Workspaces
+            </h2>
+            <div className="text-sm font-medium text-slate-500 bg-slate-200 px-3 py-1 rounded-full">
+              {projects.length} {projects.length === 1 ? 'Project' : 'Projects'}
+            </div>
+          </div>
           
-          {projects.length === 0 ? (
-            <div className="empty-projects" style={{ background: 'white', padding: '60px 40px', borderRadius: '12px', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
-              <div style={{ background: '#f8fafc', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 15px auto' }}>
-                <FolderKanban size={28} color="#94a3b8" />
+          {loading ? (
+            <div className="flex justify-center items-center h-64 bg-white rounded-3xl border border-slate-200 shadow-sm">
+               <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center flex flex-col items-center justify-center h-64">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex justify-center items-center mb-4">
+                <FolderKanban className="w-8 h-8 text-slate-400" />
               </div>
-              <h3 style={{ margin: '0 0 10px 0', color: '#334155' }}>No Active Workspaces</h3>
-              <p style={{ color: '#64748b', margin: 0 }}>Use the form on the left to generate your first compliance roadmap.</p>
+              <h3 className="text-xl font-bold text-slate-700 mb-2">No Active Workspaces</h3>
+              <p className="text-slate-500 max-w-sm">Use the form to generate your first compliance roadmap and start tracking your certification journey.</p>
             </div>
           ) : (
-            <div className="projects-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {projects.map((proj) => (
                 <div 
                   key={proj.project_id} 
-                  className="project-card" 
                   onClick={() => navigate(`/project/${proj.project_id}`)}
-                  style={{ cursor: 'pointer', transition: 'all 0.2s', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', background: 'white' }}
-                  onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                  className="group bg-white rounded-2xl border border-slate-200 p-6 cursor-pointer hover:border-blue-300 hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col h-full"
                 >
-                  <h3 style={{ color: '#2563eb', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FolderKanban size={18} /> {proj.title}
-                  </h3>
-                  <p style={{ margin: '0 0 15px 0', fontSize: '14px', color: '#475569' }}><strong>Standard:</strong> {proj.standard_id}</p>
-                  <div className="progress-bar-container" style={{ background: '#f1f5f9', height: '8px', borderRadius: '4px', overflow: 'hidden', margin: '0 0 8px 0' }}>
-                    <div className="progress-bar" style={{ width: `${proj.progress_percentage}%`, background: '#10b981', height: '100%', transition: 'width 0.3s' }}></div>
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-50 to-transparent -z-10 rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-1 pr-4">
+                      {proj.title}
+                    </h3>
+                    <div className="p-1.5 bg-slate-50 text-slate-400 rounded-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <p className="progress-text" style={{ fontSize: '12px', color: '#64748b', margin: 0, fontWeight: 'bold' }}>{proj.progress_percentage}% Complete</p>
-                    {proj.progress_percentage === 100 && <CheckCircle size={14} color="#10b981" />}
+                  
+                  <div className="mb-6 flex items-center gap-2 text-sm text-slate-600">
+                    <div className="px-2.5 py-1 bg-slate-100 rounded-md font-medium font-mono text-xs">
+                      {proj.standard_id}
+                    </div>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" /> Updated recently
+                    </span>
+                  </div>
+                  
+                  <div className="mt-auto">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-semibold text-slate-700">Progress</span>
+                      <span className="text-sm font-bold text-blue-600">{proj.progress_percentage}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-1000 ease-out ${proj.progress_percentage === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
+                        style={{ width: `${proj.progress_percentage}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               ))}

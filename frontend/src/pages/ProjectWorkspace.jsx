@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2 } from 'lucide-react';
+import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2, Plus, MessageSquare, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import '../App.css';
-
 import AppHeader from '../components/AppHeader';
+
+const generateId = () => 'sess_' + Math.random().toString(36).substr(2, 9);
 
 export default function ProjectWorkspace() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   
   const [project, setProject] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -28,9 +28,8 @@ export default function ProjectWorkspace() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  // Load project details and chat sessions
   useEffect(() => {
     if (!user || !id) return;
     
@@ -52,7 +51,6 @@ export default function ProjectWorkspace() {
     fetchWorkspaceData();
   }, [user, id]);
 
-  // Load specific chat history when active session changes
   useEffect(() => {
     if (!activeSessionId) return;
     const fetchHistory = async () => {
@@ -67,9 +65,7 @@ export default function ProjectWorkspace() {
   }, [activeSessionId]);
 
   const handleNewChat = () => {
-    // Math.random for a client-side UUID fallback
-    const newId = 'sess_' + Math.random().toString(36).substr(2, 9);
-    setActiveSessionId(newId);
+    setActiveSessionId(generateId());
     setMessages([]);
   };
 
@@ -130,7 +126,6 @@ export default function ProjectWorkspace() {
 
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // If this was a new session, refresh the sessions list to show it
       if (isNewSession) {
          const sessionsRes = await axios.get(`http://localhost:8000/api/v1/chat/project/${id}/sessions`);
          setSessions(sessionsRes.data);
@@ -145,169 +140,165 @@ export default function ProjectWorkspace() {
   };
 
   if (!project) {
-    return <div style={{ padding: '50px', textAlign: 'center' }}>Loading Workspace...</div>;
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center flex-col gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+        <div className="text-slate-600 font-medium">Loading Workspace...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', maxWidth: '100%' }}>
+    <div className="flex flex-col h-screen bg-slate-50">
       <AppHeader />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', background: '#f8fafc' }}>
+      <div className="flex flex-1 overflow-hidden">
         
         {/* Left Pane: Compliance Checklist */}
-        <div style={{ width: '400px', background: 'white', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', padding: '20px', overflowY: 'auto' }}>
-          <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h2 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>{project.title}</h2>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>Standard: <strong>{project.standard_id}</strong> | Scheme: {project.scheme_id}</div>
+        <div className="w-96 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-10 shadow-sm">
+          <div className="p-6 border-b border-slate-100">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 mb-1 leading-tight">{project.title}</h2>
+                <div className="text-xs text-slate-500 font-medium tracking-wide uppercase">
+                  Standard: <span className="text-slate-800 font-bold">{project.standard_id}</span>
+                </div>
+              </div>
+              <button 
+                onClick={handleDelete}
+                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                title="Delete Workspace"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
-            <button 
-              onClick={handleDelete}
-              style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              title="Delete Workspace"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-          
-          <div style={{ background: '#f1f5f9', height: '10px', borderRadius: '5px', marginBottom: '10px', overflow: 'hidden' }}>
-             <div style={{ height: '100%', width: `${project.progress_percentage}%`, background: '#10b981', transition: 'width 0.3s' }}></div>
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>
-              {project.progress_percentage}% Complete
+            
+            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-2">
+              <div 
+                className={`h-full rounded-full transition-all duration-700 ease-out ${project.progress_percentage === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
+                style={{ width: `${project.progress_percentage}%` }}
+              ></div>
             </div>
-            {project.progress_percentage === 100 && (
-              <span style={{ fontSize: '12px', background: '#dcfce7', color: '#166534', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                Ready for Application 🎉
-              </span>
-            )}
+            
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-bold text-slate-600">
+                {project.progress_percentage}% Complete
+              </div>
+              {project.progress_percentage === 100 && (
+                <span className="text-xs font-bold px-2.5 py-1 bg-green-100 text-green-700 rounded-full flex items-center gap-1">
+                  <CheckCircle2 size={12} /> Ready
+                </span>
+              )}
+            </div>
           </div>
 
-          <h3 style={{ fontSize: '16px', color: '#334155', marginBottom: '15px' }}>Action Items</h3>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-            {project.steps.map(step => (
-              <div 
-                key={step.id} 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  gap: '12px', 
-                  padding: '10px 15px', 
-                  background: step.status === 'COMPLETED' ? '#f0fdf4' : 'white', 
-                  border: step.status === 'COMPLETED' ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
-                  borderRadius: '8px', 
-                  transition: 'all 0.2s'
-                }}
-              >
+          <div className="flex-1 overflow-y-auto p-6 scroll-smooth custom-scrollbar">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Action Items</h3>
+            
+            <div className="space-y-3 mb-6">
+              {project.steps.map(step => (
                 <div 
+                  key={step.id} 
+                  className={`group flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${
+                    step.status === 'COMPLETED' 
+                      ? 'bg-green-50/50 border-green-200' 
+                      : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md'
+                  }`}
                   onClick={() => toggleStep(step.id, step.status)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', flex: 1 }}
                 >
-                  {step.status === 'COMPLETED' ? <CheckCircle2 color="#10b981" size={20} /> : <Circle color="#94a3b8" size={20} />}
-                  <span style={{ 
-                    fontSize: '14px', 
-                    color: step.status === 'COMPLETED' ? '#166534' : '#334155',
-                    textDecoration: step.status === 'COMPLETED' ? 'line-through' : 'none',
-                    fontWeight: step.status === 'COMPLETED' ? 'normal' : '500'
-                  }}>
+                  <div className="mt-0.5 flex-shrink-0">
+                    {step.status === 'COMPLETED' 
+                      ? <CheckCircle2 className="text-green-500" size={20} /> 
+                      : <Circle className="text-slate-300 group-hover:text-blue-400 transition-colors" size={20} />
+                    }
+                  </div>
+                  <span className={`text-sm flex-1 leading-snug transition-colors ${
+                    step.status === 'COMPLETED' 
+                      ? 'text-green-700 line-through opacity-70' 
+                      : 'text-slate-700 font-medium group-hover:text-slate-900'
+                  }`}>
                     {step.title}
                   </span>
+                  <button 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if(!window.confirm("Delete this task?")) return;
+                      try {
+                        const res = await axios.delete(`http://localhost:8000/api/v1/projects/${id}/checklist/${step.id}`);
+                        setProject(prev => ({
+                          ...prev,
+                          steps: prev.steps.filter(s => s.id !== step.id),
+                          progress_percentage: res.data.new_progress
+                        }));
+                      } catch (err) {
+                        alert("Failed to delete task");
+                      }
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-all -m-1.5"
+                    title="Delete Task"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
-                <button 
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if(!window.confirm("Delete this task?")) return;
-                    try {
-                      const res = await axios.delete(`http://localhost:8000/api/v1/projects/${id}/checklist/${step.id}`);
-                      setProject(prev => ({
-                        ...prev,
-                        steps: prev.steps.filter(s => s.id !== step.id),
-                        progress_percentage: res.data.new_progress
-                      }));
-                    } catch (err) {
-                      alert("Failed to delete task");
-                    }
-                  }}
-                  style={{ background: 'transparent', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: '4px' }}
-                  title="Delete Task"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            const title = e.target.newTask.value;
-            if(!title.trim()) return;
-            try {
-              const res = await axios.post(`http://localhost:8000/api/v1/projects/${id}/checklist`, { title });
-              setProject(prev => ({
-                ...prev,
-                steps: [...prev.steps, res.data.step],
-                progress_percentage: res.data.new_progress
-              }));
-              e.target.reset();
-            } catch (err) {
-              alert("Failed to add task");
-            }
-          }}>
-            <input 
-              type="text" 
-              name="newTask" 
-              placeholder="+ Add a custom task..." 
-              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px dashed #cbd5e1', boxSizing: 'border-box' }}
-            />
-          </form>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const title = e.target.newTask.value;
+              if(!title.trim()) return;
+              try {
+                const res = await axios.post(`http://localhost:8000/api/v1/projects/${id}/checklist`, { title });
+                setProject(prev => ({
+                  ...prev,
+                  steps: [...prev.steps, res.data.step],
+                  progress_percentage: res.data.new_progress
+                }));
+                e.target.reset();
+              } catch (err) {
+                alert("Failed to add task");
+              }
+            }}>
+              <input 
+                type="text" 
+                name="newTask" 
+                placeholder="+ Add a custom task..." 
+                className="w-full px-4 py-3 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-solid focus:border-blue-500 transition-all hover:bg-slate-100"
+              />
+            </form>
+          </div>
         </div>
 
         {/* Middle Pane: Chat Threads */}
-        <div style={{ width: '250px', background: '#f8fafc', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '15px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '14px' }}>Chat Threads</span>
+        <div className="w-64 bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 z-0">
+          <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
+            <span className="font-bold text-slate-800 text-sm">Chat Threads</span>
             <button 
               onClick={handleNewChat}
-              style={{ background: 'white', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '4px 8px', fontSize: '12px', cursor: 'pointer' }}
+              className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+              title="New Thread"
             >
-              + New
+              <Plus size={18} />
             </button>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
             {sessions.map(sess => (
               <div 
                 key={sess.session_id}
-                style={{ 
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '15px', 
-                  borderBottom: '1px solid #e2e8f0',
-                  background: activeSessionId === sess.session_id ? '#eff6ff' : 'transparent',
-                  borderLeft: activeSessionId === sess.session_id ? '3px solid #2563eb' : '3px solid transparent',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  color: '#334155'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.querySelector('.delete-thread-btn').style.opacity = 1;
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.querySelector('.delete-thread-btn').style.opacity = 0;
-                }}
+                className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                  activeSessionId === sess.session_id 
+                    ? 'bg-blue-600 shadow-md shadow-blue-500/20' 
+                    : 'hover:bg-white hover:shadow-sm border border-transparent'
+                }`}
+                onClick={() => setActiveSessionId(sess.session_id)}
               >
-                <div 
-                  onClick={() => setActiveSessionId(sess.session_id)}
-                  style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                >
-                  {sess.title}
+                <div className="flex items-center gap-2 overflow-hidden flex-1">
+                  <MessageSquare size={16} className={`flex-shrink-0 ${activeSessionId === sess.session_id ? 'text-blue-200' : 'text-slate-400 group-hover:text-blue-500 transition-colors'}`} />
+                  <span className={`text-sm truncate font-medium ${activeSessionId === sess.session_id ? 'text-white' : 'text-slate-600'}`}>
+                    {sess.title || 'New Discussion'}
+                  </span>
                 </div>
                 <button
-                  className="delete-thread-btn"
                   onClick={async (e) => {
                     e.stopPropagation();
                     if(!window.confirm("Delete this thread?")) return;
@@ -326,115 +317,127 @@ export default function ProjectWorkspace() {
                       console.error("Failed to delete thread", err);
                     }
                   }}
-                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0, padding: '0 0 0 10px' }}
+                  className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${activeSessionId === sess.session_id ? 'text-blue-200 hover:text-white hover:bg-blue-500' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'}`}
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
             {sessions.length === 0 && (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '12px' }}>
-                No chats yet
+              <div className="p-6 text-center text-slate-400 text-sm font-medium">
+                No discussions yet
               </div>
             )}
           </div>
         </div>
 
         {/* Right Pane: Dedicated AI Chat */}
-        <main className="chat-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', boxShadow: 'none' }}>
-          <div style={{ padding: '15px 20px', background: 'white', borderBottom: '1px solid #e2e8f0', fontWeight: 'bold', color: '#334155', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Bot size={18} color="#2563eb" /> Project AI Co-Pilot
+        <main className="flex-1 flex flex-col relative bg-white min-w-[400px]">
+          <div className="px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center gap-3 shadow-sm z-10 sticky top-0">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-white shadow-sm">
+              <Bot size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 leading-tight">Project AI Co-Pilot</h3>
+              <p className="text-xs font-medium text-slate-500">Expert on {project.standard_id}</p>
+            </div>
           </div>
           
-          <div className="messages-area" style={{ background: '#f8fafc' }}>
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth bg-slate-50/50">
             {messages.length === 0 && (
-              <div className="empty-state">
-                <Bot size={48} className="empty-icon" style={{ opacity: 0.5 }} />
-                <p>I am your AI assistant for this certification project.</p>
-                <p>Ask me technical questions about {project.standard_id}.</p>
+              <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-lg mx-auto">
+                <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mb-6 border border-blue-100 shadow-sm relative">
+                  <Bot size={40} className="text-blue-600" />
+                  <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-white"></div>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">I'm ready to assist</h3>
+                <p className="text-slate-500">Ask me any technical questions about the requirements for certifying your {project.title.replace(' Certification', '')} under standard {project.standard_id}.</p>
               </div>
             )}
             
-            {messages.map((msg, index) => (
-              <div key={index} className={`message-wrapper ${msg.role}`}>
-                <div className="avatar">
-                  {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
-                </div>
-                <div className="message-content">
-                  <div className="message-text">
-                    {msg.content}
+            <div className="max-w-3xl mx-auto space-y-6 pb-4">
+              {messages.map((msg, index) => (
+                <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
+                    msg.role === 'user' ? 'bg-indigo-100 text-indigo-700' : 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white'
+                  }`}>
+                    {msg.role === 'user' ? <User size={20} /> : <Bot size={22} />}
                   </div>
                   
-                  {msg.citations && msg.citations.length > 0 && (
-                    <div className="citations-container" style={{ marginTop: '10px' }}>
-                      <div className="citations-list">
+                  <div className={`flex flex-col gap-2 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`px-5 py-3.5 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
+                      msg.role === 'user' 
+                        ? 'bg-indigo-600 text-white rounded-tr-sm' 
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
+                    }`}>
+                      <p className="whitespace-pre-wrap m-0">{msg.content}</p>
+                    </div>
+                    
+                    {msg.citations && msg.citations.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-2">
                         {msg.citations.map((cit, idx) => (
                           <button 
                             key={idx} 
                             onClick={() => {
-                              // If standard is an absolute file path or filename, we append it to /pdfs
                               const filename = cit.standard.split('/').pop().split('\\').pop();
                               setPdfViewerUrl(`http://localhost:8000/pdfs/${filename}`);
                             }}
-                            style={{ 
-                              fontSize: '11px', 
-                              background: '#e2e8f0', 
-                              padding: '4px 8px', 
-                              borderRadius: '4px', 
-                              marginRight: '5px', 
-                              color: '#2563eb',
-                              border: 'none',
-                              cursor: 'pointer',
-                              fontWeight: '500'
-                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-xs font-semibold transition-colors shadow-sm group"
                             title={`Open ${cit.standard}`}
                           >
-                            <FileText size={10} style={{ display: 'inline', marginRight: '3px' }} />
-                            {cit.standard} ({cit.clause})
+                            <FileText size={12} className="group-hover:scale-110 transition-transform" />
+                            <span className="truncate max-w-[150px]">{cit.standard}</span>
+                            <span className="text-blue-400">({cit.clause})</span>
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="message-wrapper assistant">
-                <div className="avatar"><Bot size={20} /></div>
-                <div className="message-content">
-                  <div className="message-text" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Loader2 className="spinner" size={20} />
-                    Analyzing standards...
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+              ))}
+              
+              {isLoading && (
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm">
+                    <Bot size={22} />
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm flex items-center gap-3 text-slate-500">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                    <span className="text-sm font-medium">Analyzing standard {project.standard_id}...</span>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} className="h-4" />
+            </div>
           </div>
 
-          <div className="input-area" style={{ borderTop: '1px solid #e2e8f0', background: 'white', position: 'relative' }}>
+          <div className="border-t border-slate-200 bg-white p-4 relative z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
             {apiError && (
-              <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', background: '#fee2e2', color: '#ef4444', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-4 bg-red-100 text-red-700 px-4 py-2 rounded-full text-sm font-semibold shadow-md flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500"></span>
                 {apiError}
               </div>
             )}
-            <form onSubmit={handleSubmit} className="input-form" style={{ display: 'flex', width: '100%', gap: '10px', alignItems: 'center' }}>
+            <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative flex items-center shadow-sm border border-slate-200 rounded-2xl bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all overflow-hidden p-1.5">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={`Ask a question about certifying ${project.title.replace(' Certification', '')}...`}
                 disabled={isLoading}
-                style={{ flex: 1, padding: '15px 20px', borderRadius: '24px', border: '1px solid #cbd5e1', fontSize: '15px', outline: 'none' }}
+                className="flex-1 px-4 py-3 bg-transparent outline-none text-slate-700 placeholder-slate-400 disabled:opacity-50"
+                autoComplete="off"
               />
               <button 
                 type="submit" 
                 disabled={!input.trim() || isLoading}
-                style={{ background: (!input.trim() || isLoading) ? '#cbd5e1' : '#2563eb', color: 'white', border: 'none', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: (!input.trim() || isLoading) ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}
+                className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 transition-colors ml-2 flex-shrink-0"
               >
-                <Send size={20} />
+                <Send size={18} className={input.trim() && !isLoading ? 'ml-0.5' : ''} />
               </button>
             </form>
           </div>
@@ -443,12 +446,24 @@ export default function ProjectWorkspace() {
 
       {/* PDF Viewer Modal */}
       {pdfViewerUrl && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '15px', background: '#0f172a', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white' }}>
-            <h3 style={{ margin: 0 }}>Document Viewer</h3>
-            <button onClick={() => setPdfViewerUrl(null)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>Close ✕</button>
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[1000] flex flex-col p-4 md:p-8 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-t-2xl px-6 py-4 flex justify-between items-center shadow-lg mx-auto w-full max-w-6xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+                <FileText size={20} />
+              </div>
+              <h3 className="m-0 text-white font-bold text-lg">Document Viewer</h3>
+            </div>
+            <button 
+              onClick={() => setPdfViewerUrl(null)} 
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+            >
+              Close ✕
+            </button>
           </div>
-          <iframe src={pdfViewerUrl} style={{ flex: 1, width: '100%', border: 'none' }} title="PDF Viewer" />
+          <div className="flex-1 bg-white mx-auto w-full max-w-6xl rounded-b-2xl overflow-hidden shadow-2xl border-x border-b border-slate-800">
+            <iframe src={pdfViewerUrl} className="w-full h-full border-none" title="PDF Viewer" />
+          </div>
         </div>
       )}
     </div>

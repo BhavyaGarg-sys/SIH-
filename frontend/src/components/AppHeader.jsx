@@ -11,37 +11,67 @@ export default function AppHeader() {
   const isChat = location.pathname === '/chat';
 
   return (
-    <header style={{ padding: '15px 30px', background: '#0f172a', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
-          <ShieldCheck size={26} color="#3b82f6" />
-          <h1 style={{ margin: 0, color: 'white', fontSize: '20px', letterSpacing: '-0.5px' }}>MānaK AI</h1>
+    <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center shadow-sm">
+      <div className="flex items-center gap-8">
+        <div 
+          className="flex items-center gap-3 cursor-pointer group" 
+          onClick={() => navigate('/dashboard')}
+        >
+          <div className="bg-blue-600/20 p-2 rounded-xl group-hover:bg-blue-600/30 transition-colors">
+            <ShieldCheck className="w-6 h-6 text-blue-400 group-hover:text-blue-300" />
+          </div>
+          <h1 className="m-0 text-white text-xl font-bold tracking-tight">MānaK AI</h1>
         </div>
         
-        <nav style={{ display: 'flex', gap: '20px' }}>
-          <div 
+        <nav className="hidden md:flex gap-2">
+          <button 
             onClick={() => navigate('/dashboard')} 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', background: isDashboard ? 'rgba(255,255,255,0.1)' : 'transparent', color: isDashboard ? 'white' : '#94a3b8', transition: 'all 0.2s', fontWeight: isDashboard ? '600' : 'normal' }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+              isDashboard 
+                ? 'bg-slate-800 text-white font-semibold shadow-inner' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
           >
-            <LayoutDashboard size={16} /> Workspaces
-          </div>
-          <div 
+            <LayoutDashboard size={18} /> Workspaces
+          </button>
+          <button 
             onClick={() => navigate('/chat')} 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', background: isChat ? 'rgba(255,255,255,0.1)' : 'transparent', color: isChat ? 'white' : '#94a3b8', transition: 'all 0.2s', fontWeight: isChat ? '600' : 'normal' }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+              isChat 
+                ? 'bg-slate-800 text-white font-semibold shadow-inner' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
           >
-            <MessageSquare size={16} /> AI Research
-          </div>
+            <MessageSquare size={18} /> AI Research
+          </button>
         </nav>
       </div>
       
-      <button 
-        onClick={() => { logout(); navigate('/'); }} 
-        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s' }}
-        onMouseOver={(e) => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = 'white'; }}
-        onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; }}
-      >
-        <LogOut size={14} /> Sign Out
-      </button>
+      <div className="flex items-center gap-4">
+        {/* Mobile Navigation */}
+        <div className="md:hidden flex gap-2 mr-2">
+          <button 
+            onClick={() => navigate('/dashboard')} 
+            className={`p-2 rounded-lg transition-all ${isDashboard ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
+          >
+            <LayoutDashboard size={20} />
+          </button>
+          <button 
+            onClick={() => navigate('/chat')} 
+            className={`p-2 rounded-lg transition-all ${isChat ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
+          >
+            <MessageSquare size={20} />
+          </button>
+        </div>
+
+        <button 
+          onClick={() => { logout(); navigate('/'); }} 
+          className="flex items-center gap-2 bg-transparent hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 group"
+        >
+          <LogOut size={16} className="text-slate-400 group-hover:text-white transition-colors" /> 
+          <span className="hidden sm:inline">Sign Out</span>
+        </button>
+      </div>
     </header>
   );
 }
