@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
+from typing import List, Optional
 from bson import ObjectId
 from api.schemas.projects import ProjectCreate, ProjectResponse, StepUpdate, ChecklistStep
 from api.core.database import get_database
