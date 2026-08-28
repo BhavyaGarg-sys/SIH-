@@ -11,5 +11,15 @@ services:
     command: redis-server --appendonly yes
     restart: unless-stopped
 
+  mongodb:
+    image: mongo:latest
+    container_name: bis-rag-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
 volumes:
   redis_data:
+  mongodb_data:

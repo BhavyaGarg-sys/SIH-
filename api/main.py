@@ -1,11 +1,28 @@
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes.query import router as query_router
+from contextlib import asynccontextmanager
+
+from api.routes.auth import router as auth_router
+from api.routes.chat import router as chat_router
+from api.routes.projects import router as projects_router
+from api.routes.data import router as data_router
+from api.core.database import connect_to_mongo, close_mongo_connection
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await connect_to_mongo()
+    yield
+    # Shutdown
+    await close_mongo_connection()
 
 app = FastAPI(
-    title="BIS Document RAG QA API",
-    description="Question-answering API system for Bureau of Indian Standards (BIS) technical documents.",
-    version="0.1.0"
+    title="MānaK AI - Compliance Tracker API",
+    description="Backend API for the SIH BIS Compliance Platform",
+    version="0.2.0",
+    lifespan=lifespan
 )
 
 # Enable CORS for frontend integration
@@ -17,15 +34,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routes
-app.include_router(query_router)
+from fastapi.staticfiles import StaticFiles
+import os
 
+# Include API routes
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
+app.include_router(projects_router, prefix="/api/v1/projects", tags=["Projects"])
+app.include_router(data_router, prefix="/api/v1/data", tags=["Domain Data"])
+
+# Mount static files for PDFs
+docs_path = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
+app.mount("/pdfs", StaticFiles(directory=docs_path), name="pdfs")
 
 @app.get("/")
 async def root():
     """Healthcheck & API welcome root endpoint."""
     return {
         "status": "healthy",
-        "service": "BIS RAG QA API",
-        "version": "0.1.0"
+        "service": "MānaK AI API",
+        "version": "0.2.0"
     }

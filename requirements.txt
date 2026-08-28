@@ -34,3 +34,11 @@ redis
 
 # Testing
 pytest
+
+# Database & Auth
+motor
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+
+openai
