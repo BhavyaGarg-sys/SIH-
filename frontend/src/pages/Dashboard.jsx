@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { PlusCircle, FolderKanban, CheckCircle, Loader2, Rocket, Clock, ArrowRight } from 'lucide-react';
 import AppHeader from '../components/AppHeader';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -42,11 +43,12 @@ export default function Dashboard() {
     try {
       const res = await axios.post('http://localhost:8000/api/v1/projects/generate', { product, role });
       if(res.data.project_id) {
+         toast.success("Workspace created!");
          navigate(`/project/${res.data.project_id}`);
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to create workspace");
+      toast.error("Failed to create workspace");
       setIsGenerating(false);
     }
   };

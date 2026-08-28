@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,7 +26,9 @@ export default function Login() {
       }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Authentication failed');
+      const msg = err.response?.data?.detail || 'Authentication failed';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

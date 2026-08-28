@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Send, Loader2, FileText, ChevronDown, ChevronUp, Bot, User, Plus, MessageSquare, Trash2, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AppHeader from '../components/AppHeader';
+import { toast } from 'sonner';
 
 const generateId = () => {
   return window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'sess_' + Math.random().toString(36).substr(2, 9);
@@ -79,9 +80,10 @@ export default function Chat() {
         session_id: activeSessionId
       });
       setSavedWidgets(prev => new Set(prev).add(index));
+      toast.success('Project saved to your Workspaces!');
     } catch (err) {
       console.error(err);
-      alert('Failed to save project');
+      toast.error('Failed to save project');
     }
   };
 

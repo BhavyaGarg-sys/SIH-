@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2, Plus, MessageSquare, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AppHeader from '../components/AppHeader';
+import { toast } from 'sonner';
 
 const generateId = () => 'sess_' + Math.random().toString(36).substr(2, 9);
 
@@ -73,9 +74,10 @@ export default function ProjectWorkspace() {
     if (!window.confirm("Are you sure you want to delete this entire workspace? This cannot be undone.")) return;
     try {
       await axios.delete(`http://localhost:8000/api/v1/projects/${id}`);
+      toast.success("Project deleted successfully");
       navigate('/dashboard');
     } catch (err) {
-      alert("Failed to delete project");
+      toast.error("Failed to delete project");
     }
   };
 
@@ -231,7 +233,7 @@ export default function ProjectWorkspace() {
                           progress_percentage: res.data.new_progress
                         }));
                       } catch (err) {
-                        alert("Failed to delete task");
+                        toast.error("Failed to delete task");
                       }
                     }}
                     className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-all -m-1.5"
@@ -255,8 +257,9 @@ export default function ProjectWorkspace() {
                   progress_percentage: res.data.new_progress
                 }));
                 e.target.reset();
+                toast.success("Task added");
               } catch (err) {
-                alert("Failed to add task");
+                toast.error("Failed to add task");
               }
             }}>
               <input 
