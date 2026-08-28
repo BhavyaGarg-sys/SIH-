@@ -152,6 +152,24 @@ export default function ProjectWorkspace() {
     }
   };
 
+  const handleExportPdf = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/v1/projects/${id}/export`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `roadmap_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("PDF Exported Successfully!");
+    } catch (err) {
+      toast.error("Failed to export PDF");
+    }
+  };
+
   if (!project) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center flex-col gap-4">
@@ -179,7 +197,7 @@ export default function ProjectWorkspace() {
               </div>
               <div className="flex gap-2 items-center">
                 <button
-                  onClick={() => window.print()}
+                  onClick={handleExportPdf}
                   className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100 hidden sm:block"
                   title="Export to PDF"
                 >

@@ -1,5 +1,12 @@
 import uuid
+import io
 from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from bson import ObjectId
@@ -145,6 +152,88 @@ async def get_project(project_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Project not found")
         
     return serialize_project(project)
+
+@router.get("/{project_id}/export")
+async def export_project_pdf(project_id: str, user: dict = Depends(get_current_user)):
+    db = get_database()
+    try:
+        obj_id = ObjectId(project_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid project ID format")
+        
+    project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    user_doc = await db.users.find_one({"email": user["email"]})
+    company_name = user_doc.get("profile", {}).get("company_name", "Unknown Company") if user_doc else "Unknown Company"
+    
+    # Generate PDF in memory
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    subtitle_style = styles['Heading2']
+    normal_style = styles['Normal']
+    
+    # Custom styles
+    title_style.alignment = 1 # Center
+    
+    elements = []
+    
+    # Header
+    elements.append(Paragraph("M?naK AI - Compliance Roadmap", title_style))
+    elements.append(Spacer(1, 12))
+    
+    elements.append(Paragraph(f"<b>Project:</b> {project.get('title', 'N/A')}", normal_style))
+    elements.append(Paragraph(f"<b>Company:</b> {company_name}", normal_style))
+    elements.append(Paragraph(f"<b>Standard:</b> {project.get('standard_id', 'N/A')}", normal_style))
+    elements.append(Paragraph(f"<b>Status:</b> {project.get('status', 'PLANNING')}", normal_style))
+    elements.append(Paragraph(f"<b>Progress:</b> {project.get('progress_percentage', 0)}%", normal_style))
+    elements.append(Spacer(1, 24))
+    
+    elements.append(Paragraph("Action Items Checklist", subtitle_style))
+    elements.append(Spacer(1, 12))
+    
+    # Table data
+    data = [["Status", "Task", "Due Date"]]
+    steps = project.get("steps", [])
+    
+    for step in steps:
+        status_text = step.get("status", "PENDING").replace("_", " ")
+        title_text = step.get("title", "")
+        due = step.get("due_date", "-")
+        if not due:
+            due = "-"
+            
+        data.append([status_text, Paragraph(title_text, normal_style), due])
+        
+    # Table styling
+    t = Table(data, colWidths=[80, 300, 80])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e40af')), # blue-800
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 12),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8fafc')), # slate-50
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    
+    elements.append(t)
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    headers = {
+        'Content-Disposition': f'attachment; filename="roadmap_{project_id}.pdf"'
+    }
+    
+    return Response(content=buffer.getvalue(), media_type="application/pdf", headers=headers)
 
 @router.patch("/{project_id}", response_model=dict)
 async def update_project_status(project_id: str, update: ProjectStatusUpdate, user: dict = Depends(get_current_user)):
