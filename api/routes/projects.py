@@ -166,11 +166,21 @@ async def export_project_pdf(project_id: str, user: dict = Depends(get_current_u
         raise HTTPException(status_code=404, detail="Project not found")
         
     user_doc = await db.users.find_one({"email": user["email"]})
-    company_name = user_doc.get("profile", {}).get("company_name", "Unknown Company") if user_doc else "Unknown Company"
+    profile = user_doc.get("profile", {}) if user_doc else {}
+    company_name = profile.get("company_name", "Unknown Company")
+    sector = profile.get("industry_sector", "N/A")
+    state = profile.get("state", "N/A")
+    
+    # Fetch bookmarks
+    bookmarks_cursor = db.bookmarks.find({"user_id": user["id"]})
+    bookmarks = await bookmarks_cursor.to_list(length=100)
     
     # Generate PDF in memory
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    from reportlab.lib.units import inch
+    from reportlab.platypus import PageBreak
+    
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
     
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
@@ -186,8 +196,12 @@ async def export_project_pdf(project_id: str, user: dict = Depends(get_current_u
     elements.append(Paragraph("M?naK AI - Compliance Roadmap", title_style))
     elements.append(Spacer(1, 12))
     
+    date_str = datetime.utcnow().strftime("%B %d, %Y")
+    elements.append(Paragraph(f"<b>Date Generated:</b> {date_str}", normal_style))
+    elements.append(Spacer(1, 12))
+    
     elements.append(Paragraph(f"<b>Project:</b> {project.get('title', 'N/A')}", normal_style))
-    elements.append(Paragraph(f"<b>Company:</b> {company_name}", normal_style))
+    elements.append(Paragraph(f"<b>Company:</b> {company_name} ({sector}, {state})", normal_style))
     elements.append(Paragraph(f"<b>Standard:</b> {project.get('standard_id', 'N/A')}", normal_style))
     elements.append(Paragraph(f"<b>Status:</b> {project.get('status', 'PLANNING')}", normal_style))
     elements.append(Paragraph(f"<b>Progress:</b> {project.get('progress_percentage', 0)}%", normal_style))
@@ -225,8 +239,30 @@ async def export_project_pdf(project_id: str, user: dict = Depends(get_current_u
     
     elements.append(t)
     
+    if bookmarks:
+        elements.append(PageBreak())
+        elements.append(Paragraph("Relevant Standards & Cited Clauses", title_style))
+        elements.append(Spacer(1, 12))
+        
+        for bk in bookmarks:
+            elements.append(Paragraph(f"<b>{bk.get('standard_ref', 'N/A')}</b>", subtitle_style))
+            elements.append(Paragraph(f"<i>Clause:</i> {bk.get('clause_text', '')}", normal_style))
+            if bk.get('note'):
+                elements.append(Spacer(1, 6))
+                elements.append(Paragraph(f"<b>Note:</b> {bk.get('note')}", normal_style))
+            elements.append(Spacer(1, 18))
+            
+    def add_footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica', 9)
+        canvas.setStrokeColor(colors.lightgrey)
+        canvas.line(inch, 0.75 * inch, doc.pagesize[0] - inch, 0.75 * inch)
+        canvas.drawString(inch, 0.5 * inch, "M?naK AI - Confidential Compliance Report")
+        canvas.drawRightString(doc.pagesize[0] - inch, 0.5 * inch, f"Page {doc.page}")
+        canvas.restoreState()
+    
     # Build PDF
-    doc.build(elements)
+    doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
     
     headers = {
