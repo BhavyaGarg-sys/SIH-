@@ -241,7 +241,7 @@ export default function ProjectWorkspace() {
                    <p className="text-slate-500 text-sm">AI generates steps automatically, or add your own.</p>
                 </div>
               )}
-              {project.steps
+              {[...project.steps]
                 .sort((a, b) => {
                   const today = new Date().toISOString().split('T')[0];
                   const aOverdue = a.status !== 'COMPLETED' && a.due_date && a.due_date < today;
