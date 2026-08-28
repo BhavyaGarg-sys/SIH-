@@ -337,5 +337,5 @@ async def delete_project(project_id: str, user: dict = Depends(get_current_user)
         raise HTTPException(status_code=404, detail="Project not found")
         
     # Also delete associated chat history to keep DB clean
-    await db.chats.delete_many({"session_id": project_id})
+    await db.chats.delete_many({"project_id": project_id})
     return None
