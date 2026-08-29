@@ -24,6 +24,8 @@ import {
   Loader2
 } from 'lucide-react';
 
+import { useNavigate } from 'react-router-dom';
+
 export default function DashboardView({ setCurrentView }) {
   const [activeSidebarTab, setActiveSidebarTab] = useState('dashboard');
   const [activitySearch, setActivitySearch] = useState('');
@@ -32,7 +34,7 @@ export default function DashboardView({ setCurrentView }) {
   
   const [showModal, setShowModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const navigate = window.location;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -43,7 +45,7 @@ export default function DashboardView({ setCurrentView }) {
         console.error('Failed to load dashboard data', err);
         if (err.response && err.response.status === 401) {
           localStorage.removeItem('token');
-          navigate.href = '/login';
+          navigate('/login');
         }
       } finally {
         setLoading(false);
@@ -62,7 +64,8 @@ export default function DashboardView({ setCurrentView }) {
     try {
       const res = await axios.post('http://localhost:8000/api/v1/projects/generate', { product, role });
       if(res.data.project_id) {
-         navigate.href = `/workspace/${res.data.project_id}`;
+         setIsGenerating(false);
+         navigate(`/workspace/${res.data.project_id}`);
       }
     } catch (err) {
       console.error(err);
