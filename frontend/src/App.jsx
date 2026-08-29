@@ -11,9 +11,19 @@ import Login from './pages/Login';
 import ProjectWorkspace from './pages/ProjectWorkspace';
 import Bookmarks from './pages/Bookmarks';
 import OldDashboard from './pages/OldDashboard';
-import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search, Bookmark } from 'lucide-react';
-import { AuthProvider } from './context/AuthContext';
+import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search, Bookmark, Loader2 } from 'lucide-react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  if (!user) {
+    window.location.href = '/login';
+    return null;
+  }
+  return children;
+}
 
 function AppContent() {
   const location = useLocation();
@@ -77,13 +87,13 @@ function AppContent() {
           <Route path="/" element={<LandingPage setCurrentView={setCurrentView} />} />
           <Route path="/login" element={<Login />} />
           <Route path="/comparison" element={<ComparisonView setCurrentView={setCurrentView} />} />
-          <Route path="/dashboard" element={<DashboardView setCurrentView={setCurrentView} />} />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardView setCurrentView={setCurrentView} /></ProtectedRoute>} />
           <Route path="/reader" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
           <Route path="/reader/:projectId" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
           <Route path="/design-system" element={<DesignSystemView setCurrentView={setCurrentView} />} />
-          <Route path="/workspace/:id" element={<ProjectWorkspace />} />
-          <Route path="/bookmarks" element={<Bookmarks />} />
-          <Route path="/old-dashboard" element={<OldDashboard />} />
+          <Route path="/workspace/:id" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
+          <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
+          <Route path="/old-dashboard" element={<ProtectedRoute><OldDashboard /></ProtectedRoute>} />
         </Routes>
       </main>
 

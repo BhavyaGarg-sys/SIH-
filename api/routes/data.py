@@ -5,7 +5,7 @@ router = APIRouter()
 
 @router.get("/labs")
 async def get_labs(product_category: Optional[str] = None, state: Optional[str] = None):
-    \"\"\"Fetch geo-aware labs for completing project steps.\"\"\"
+    """Fetch geo-aware labs for completing project steps."""
     # TODO: Query MongoDB or local JSON file
     return [
         {
@@ -18,7 +18,7 @@ async def get_labs(product_category: Optional[str] = None, state: Optional[str] 
 
 @router.get("/schemes")
 async def get_schemes():
-    \"\"\"Fetch raw BIS schemes available.\"\"\"
+    """Fetch raw BIS schemes available."""
     # TODO: Return structured rules
     return [
         {"id": "CRS", "name": "Compulsory Registration Scheme"},
@@ -27,7 +27,7 @@ async def get_schemes():
 
 @router.get("/comparison-report")
 async def get_comparison_report():
-    \"\"\"Return structured mock comparison data for ComparisonView.\"\"\"
+    """Return structured mock comparison data for ComparisonView."""
     return {
         "title": "Seismic Detailing Comparison: IS 1893 vs IS 13920",
         "subtitle": "Cross-reference analysis generated on March 12, 2026",

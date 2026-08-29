@@ -37,6 +37,10 @@ export default function DashboardView({ setCurrentView }) {
         setDashboardData(response.data);
       } catch (err) {
         console.error('Failed to load dashboard data', err);
+        if (err.response && err.response.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
       } finally {
         setLoading(false);
       }
