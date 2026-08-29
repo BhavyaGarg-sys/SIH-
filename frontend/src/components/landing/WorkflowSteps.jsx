@@ -1,5 +1,5 @@
-import React from 'react';
-import { WORKFLOW_STEPS } from '../../data/mockData';
+﻿import React from 'react';
+import { WORKFLOW_STEPS } from '../../data/standardData';
 import { Search, Cpu, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function WorkflowSteps({ onStepClick }) {

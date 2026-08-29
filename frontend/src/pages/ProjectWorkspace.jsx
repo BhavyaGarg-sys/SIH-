@@ -173,7 +173,7 @@ export default function ProjectWorkspace() {
   if (!project) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center flex-col gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand-600" />
         <div className="text-slate-600 font-medium">Loading Workspace...</div>
       </div>
     );
@@ -198,7 +198,7 @@ export default function ProjectWorkspace() {
               <div className="flex gap-2 items-center">
                 <button
                   onClick={handleExportPdf}
-                  className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100 hidden sm:block"
+                  className="p-1.5 text-slate-500 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 rounded-lg transition-colors border border-transparent hover:border-brand-100 hidden sm:block"
                   title="Export to PDF"
                 >
                   <Printer size={16} />
@@ -207,7 +207,7 @@ export default function ProjectWorkspace() {
                   value={project.status || 'PLANNING'} 
                   onChange={handleStatusChange}
                   className={`text-xs font-bold px-2 py-1 rounded-lg border outline-none cursor-pointer ${
-                    project.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                    project.status === 'IN_PROGRESS' ? 'bg-brand-50 border-brand-200 text-brand-700' :
                     project.status === 'SUBMITTED' ? 'bg-amber-50 border-amber-200 text-amber-700' :
                     project.status === 'CERTIFIED' ? 'bg-green-50 border-green-200 text-green-700' :
                     project.status === 'ON_HOLD' ? 'bg-red-50 border-red-200 text-red-700' :
@@ -232,7 +232,7 @@ export default function ProjectWorkspace() {
             
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-2">
               <div 
-                className={`h-full rounded-full transition-all duration-700 ease-out ${project.progress_percentage === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
+                className={`h-full rounded-full transition-all duration-700 ease-out ${project.progress_percentage === 100 ? 'bg-green-500' : 'bg-brand-600'}`}
                 style={{ width: `${project.progress_percentage}%` }}
               ></div>
             </div>
@@ -274,13 +274,13 @@ export default function ProjectWorkspace() {
                   className={`group flex items-start gap-3 p-3.5 rounded-xl border transition-all shadow-sm ${
                     step.status === 'COMPLETED' 
                       ? 'bg-green-50/50 border-green-200' 
-                      : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md'
+                      : 'bg-white border-slate-200 hover:border-brand-300 hover:shadow-md'
                   }`}
                 >
                   <div className="mt-0.5 flex-shrink-0 cursor-pointer" onClick={() => toggleStep(step.id, step.status)}>
                     {step.status === 'COMPLETED' 
                       ? <CheckCircle2 className="text-green-500" size={20} /> 
-                      : <Circle className="text-slate-300 group-hover:text-blue-400 transition-colors" size={20} />
+                      : <Circle className="text-slate-300 group-hover:text-brand-400 transition-colors" size={20} />
                     }
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col">
@@ -358,7 +358,7 @@ export default function ProjectWorkspace() {
                 type="text" 
                 name="newTask" 
                 placeholder="+ Add a custom task..." 
-                className="w-full px-4 py-3 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-solid focus:border-blue-500 transition-all hover:bg-slate-100"
+                className="w-full px-4 py-3 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-solid focus:border-brand-500 transition-all hover:bg-slate-100"
               />
             </form>
           </div>
@@ -370,7 +370,7 @@ export default function ProjectWorkspace() {
             <span className="font-bold text-slate-800 text-sm">Chat Threads</span>
             <button 
               onClick={handleNewChat}
-              className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+              className="p-1.5 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded-lg transition-colors"
               title="New Thread"
             >
               <Plus size={18} />
@@ -382,13 +382,13 @@ export default function ProjectWorkspace() {
                 key={sess.session_id}
                 className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
                   activeSessionId === sess.session_id 
-                    ? 'bg-blue-600 shadow-md shadow-blue-500/20' 
+                    ? 'bg-brand-600 shadow-md shadow-brand-500/20' 
                     : 'hover:bg-white hover:shadow-sm border border-transparent'
                 }`}
                 onClick={() => setActiveSessionId(sess.session_id)}
               >
                 <div className="flex items-center gap-2 overflow-hidden flex-1">
-                  <MessageSquare size={16} className={`flex-shrink-0 ${activeSessionId === sess.session_id ? 'text-blue-200' : 'text-slate-400 group-hover:text-blue-500 transition-colors'}`} />
+                  <MessageSquare size={16} className={`flex-shrink-0 ${activeSessionId === sess.session_id ? 'text-brand-200' : 'text-slate-400 group-hover:text-brand-500 transition-colors'}`} />
                   <span className={`text-sm truncate font-medium ${activeSessionId === sess.session_id ? 'text-white' : 'text-slate-600'}`}>
                     {sess.title || 'New Discussion'}
                   </span>
@@ -412,7 +412,7 @@ export default function ProjectWorkspace() {
                       console.error("Failed to delete thread", err);
                     }
                   }}
-                  className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${activeSessionId === sess.session_id ? 'text-blue-200 hover:text-white hover:bg-blue-500' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'}`}
+                  className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${activeSessionId === sess.session_id ? 'text-brand-200 hover:text-white hover:bg-brand-500' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'}`}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -423,7 +423,7 @@ export default function ProjectWorkspace() {
                 <MessageSquare className="w-8 h-8 text-slate-300 mb-2" />
                 <h4 className="font-bold text-slate-700 mb-1">Nothing here yet</h4>
                 <p>Ask M─ünaK anything about BIS standards or certification.</p>
-                <button onClick={handleNewChat} className="mt-3 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-100 transition-colors">New Chat</button>
+                <button onClick={handleNewChat} className="mt-3 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg font-medium hover:bg-brand-100 transition-colors">New Chat</button>
               </div>
             )}
           </div>
@@ -432,7 +432,7 @@ export default function ProjectWorkspace() {
         {/* Right Pane: Dedicated AI Chat */}
         <main className="flex-1 flex flex-col relative bg-white min-w-[400px]">
           <div className="px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center gap-3 shadow-sm z-10 sticky top-0">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg text-white shadow-sm">
+            <div className="p-2 bg-gradient-to-br from-brand-500 to-indigo-600 rounded-lg text-white shadow-sm">
               <Bot size={20} />
             </div>
             <div>
@@ -444,8 +444,8 @@ export default function ProjectWorkspace() {
           <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth bg-slate-50/50">
             {messages.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-center px-4 max-w-lg mx-auto">
-                <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mb-6 border border-blue-100 shadow-sm relative">
-                  <Bot size={40} className="text-blue-600" />
+                <div className="w-20 h-20 bg-brand-50 rounded-3xl flex items-center justify-center mb-6 border border-brand-100 shadow-sm relative">
+                  <Bot size={40} className="text-brand-600" />
                   <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-white"></div>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">I'm ready to assist</h3>
@@ -457,7 +457,7 @@ export default function ProjectWorkspace() {
               {messages.map((msg, index) => (
                 <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
-                    msg.role === 'user' ? 'bg-indigo-100 text-indigo-700' : 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white'
+                    msg.role === 'user' ? 'bg-indigo-100 text-indigo-700' : 'bg-gradient-to-br from-brand-500 to-indigo-600 text-white'
                   }`}>
                     {msg.role === 'user' ? <User size={20} /> : <Bot size={22} />}
                   </div>
@@ -474,18 +474,18 @@ export default function ProjectWorkspace() {
                     {msg.citations && msg.citations.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-2">
                         {msg.citations.map((cit, idx) => (
-                          <div key={idx} className="flex items-center bg-blue-50 border border-blue-200 rounded-full overflow-hidden shadow-sm group">
+                          <div key={idx} className="flex items-center bg-brand-50 border border-brand-200 rounded-full overflow-hidden shadow-sm group">
                             <button 
                               onClick={() => {
                                 const filename = cit.standard.split('/').pop().split('\\').pop();
                                 setPdfViewerUrl(`http://localhost:8000/pdfs/${filename}`);
                               }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-brand-100 text-brand-700 text-xs font-semibold transition-colors"
                               title={`Open ${cit.standard}`}
                             >
                               <FileText size={12} className="group-hover:scale-110 transition-transform" />
                               <span className="truncate max-w-[150px]">{cit.standard}</span>
-                              <span className="text-blue-400">({cit.clause})</span>
+                              <span className="text-brand-400">({cit.clause})</span>
                             </button>
                             <button
                               onClick={async (e) => {
@@ -502,7 +502,7 @@ export default function ProjectWorkspace() {
                                   toast.error("Failed to save bookmark");
                                 }
                               }}
-                              className="px-2 py-1.5 border-l border-blue-200 text-blue-400 hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                              className="px-2 py-1.5 border-l border-brand-200 text-brand-400 hover:bg-brand-100 hover:text-brand-600 transition-colors"
                               title="Bookmark this standard"
                             >
                               <Bookmark size={12} />
@@ -517,14 +517,14 @@ export default function ProjectWorkspace() {
               
               {isLoading && (
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 text-white flex items-center justify-center shadow-sm">
                     <Bot size={22} />
                   </div>
                   <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm flex items-center gap-3 text-slate-500">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
                     <span className="text-sm font-medium">Analyzing standard {project.standard_id}...</span>
                   </div>
@@ -541,7 +541,7 @@ export default function ProjectWorkspace() {
                 {apiError}
               </div>
             )}
-            <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative flex items-center shadow-sm border border-slate-200 rounded-2xl bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all overflow-hidden p-1.5">
+            <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative flex items-center shadow-sm border border-slate-200 rounded-2xl bg-white focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 transition-all overflow-hidden p-1.5">
               <input
                 type="text"
                 value={input}
@@ -554,7 +554,7 @@ export default function ProjectWorkspace() {
               <button 
                 type="submit" 
                 disabled={!input.trim() || isLoading}
-                className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 transition-colors ml-2 flex-shrink-0"
+                className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center hover:bg-brand-700 disabled:bg-slate-100 disabled:text-slate-400 transition-colors ml-2 flex-shrink-0"
               >
                 <Send size={18} className={input.trim() && !isLoading ? 'ml-0.5' : ''} />
               </button>
@@ -568,7 +568,7 @@ export default function ProjectWorkspace() {
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[1000] flex flex-col p-4 md:p-8 animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 rounded-t-2xl px-6 py-4 flex justify-between items-center shadow-lg mx-auto w-full max-w-6xl">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+              <div className="p-2 bg-brand-500/20 text-brand-400 rounded-lg">
                 <FileText size={20} />
               </div>
               <h3 className="m-0 text-white font-bold text-lg">Document Viewer</h3>

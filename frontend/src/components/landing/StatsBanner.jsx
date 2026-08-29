@@ -1,5 +1,5 @@
-import React from 'react';
-import { STATS } from '../../data/mockData';
+﻿import React from 'react';
+import { STATS } from '../../data/standardData';
 import { Database, Network, Target, Zap } from 'lucide-react';
 
 export default function StatsBanner() {

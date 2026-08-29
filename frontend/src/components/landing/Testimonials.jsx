@@ -1,5 +1,5 @@
-import React from 'react';
-import { TESTIMONIALS } from '../../data/mockData';
+﻿import React from 'react';
+import { TESTIMONIALS } from '../../data/standardData';
 import { Quote, Star } from 'lucide-react';
 
 export default function Testimonials() {

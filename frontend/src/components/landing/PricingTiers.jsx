@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { PRICING_TIERS } from '../../data/mockData';
+﻿import React, { useState } from 'react';
+import { PRICING_TIERS } from '../../data/standardData';
 import { Check, Sparkles, Zap, Shield, ArrowRight } from 'lucide-react';
 
 export default function PricingTiers({ onSelectPlan }) {
@@ -55,10 +55,10 @@ export default function PricingTiers({ onSelectPlan }) {
             const price = tier.priceCustom 
               ? tier.priceCustom 
               : annualBilling 
-                ? `₹${tier.priceAnnual.toLocaleString('en-IN')}` 
+                ? `â‚¹${tier.priceAnnual.toLocaleString('en-IN')}` 
                 : tier.priceMonthly === 0 
                   ? 'Free' 
-                  : `₹${tier.priceMonthly.toLocaleString('en-IN')}`;
+                  : `â‚¹${tier.priceMonthly.toLocaleString('en-IN')}`;
 
             return (
               <div

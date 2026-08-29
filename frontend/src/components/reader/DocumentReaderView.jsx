@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import axios from 'axios';
-import { STANDARD_DETAIL } from '../../data/mockData';
+import { STANDARD_DETAIL } from '../../data/standardData';
 import { 
   BookOpen, 
   Sparkles, 
