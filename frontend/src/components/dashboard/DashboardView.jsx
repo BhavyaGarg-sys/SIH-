@@ -264,10 +264,10 @@ export default function DashboardView({ setCurrentView }) {
               })}
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               
-              {/* Activity Table (2 Cols) */}
-              <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+              {/* Activity Table (Full Width) */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <h3 className="font-bold text-slate-900 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-brand-500" />
@@ -334,62 +334,7 @@ export default function DashboardView({ setCurrentView }) {
                 </div>
               </div>
 
-              {/* Sidebar Modules (1 Col) */}
-              <div className="xl:col-span-1 space-y-6">
-                
-                {/* Saved Collections */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                      <FolderLock className="w-4 h-4 text-slate-400" />
-                      Saved Collections
-                    </h3>
-                    <button className="text-[10px] font-bold text-brand-600 hover:text-brand-700 px-2 py-1 rounded bg-brand-50">
-                      View All
-                    </button>
-                  </div>
 
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-slate-50/70 transition flex items-center justify-between cursor-pointer group">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
-                          <Folder className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-800 text-xs group-hover:text-brand-700 transition">
-                            Seismic Design Pack
-                          </h4>
-                          <p className="text-[11px] text-slate-400">
-                            3 Codes • Today
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Compliance Alerts */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                    <h3 className="font-bold text-slate-900 text-sm">Regulatory Alerts</h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-xl bg-amber-50/50 border border-amber-200/80 text-xs">
-                      <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
-                        <span>IS 1893 Part 1 Amendment</span>
-                        <span className="text-[10px] text-amber-700 font-mono font-normal">Pending</span>
-                      </div>
-                      <p className="text-slate-600 text-[11px] leading-relaxed">
-                        Draft amendment regarding torsional irregularity is currently under public review.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
             </div>
 
           </div>
