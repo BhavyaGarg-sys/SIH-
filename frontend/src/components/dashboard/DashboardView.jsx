@@ -100,10 +100,14 @@ export default function DashboardView({ setCurrentView }) {
                   <button
                     key={item.id}
                     onClick={() => setActiveSidebarTab(item.id)}
-                    className={\w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition \\}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+                      isActive
+                        ? 'bg-brand-50 text-brand-700 font-bold border border-brand-200/80 shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon className={\w-4 h-4 \\} />
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
                       <span>{item.label}</span>
                     </div>
                     {item.badge && (
@@ -135,7 +139,7 @@ export default function DashboardView({ setCurrentView }) {
                 </h1>
                 <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                   <span>{new Date().toLocaleDateString()}</span>
-                  <span>•</span>
+                  <span>â€¢</span>
                   <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Your API endpoints are healthy (99.98% uptime)
@@ -172,14 +176,14 @@ export default function DashboardView({ setCurrentView }) {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-slate-500">{metric.title}</span>
-                      <div className={\p-1.5 rounded-lg \\}>
+                      <div className={`p-1.5 rounded-lg ${metric.isWarning ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                     </div>
                     <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
                       {metric.value}
                     </div>
-                    <div className={\	ext-[11px] font-medium flex items-center gap-1 \\}>
+                    <div className={`text-[11px] font-medium flex items-center gap-1 ${metric.isWarning ? 'text-amber-600' : 'text-slate-500'}`}>
                       {metric.trend}
                     </div>
                   </div>
@@ -230,7 +234,7 @@ export default function DashboardView({ setCurrentView }) {
                           <tr 
                             key={rIdx}
                             onClick={() => {
-                              if (row.type === 'Workspace') window.location.href = \/workspace/\\;
+                              if (row.type === 'Workspace') window.location.href = `/workspace/${row.projectId}`;
                             }}
                             className="hover:bg-slate-50 cursor-pointer transition group"
                           >
@@ -283,7 +287,7 @@ export default function DashboardView({ setCurrentView }) {
                             Seismic Design Pack
                           </h4>
                           <p className="text-[11px] text-slate-400">
-                            3 Codes • Today
+                            3 Codes â€¢ Today
                           </p>
                         </div>
                       </div>

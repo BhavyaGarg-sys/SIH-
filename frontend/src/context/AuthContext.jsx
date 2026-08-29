@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       setUser({ token });
-      axios.defaults.headers.common['Authorization'] = \Bearer \\;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     setLoading(false);
   }, []);
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
       setUser({ token: access_token });
-      axios.defaults.headers.common['Authorization'] = \Bearer \\;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       return true;
     } catch (error) {
       console.error('Login failed', error);

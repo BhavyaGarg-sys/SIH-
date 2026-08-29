@@ -58,7 +58,7 @@ export default function DocumentReaderView({ setCurrentView }) {
       
       let citationStr = null;
       if (citations && citations.length > 0) {
-        citationStr = \`\${citations[0].standard} Clause \${citations[0].clause}\`;
+        citationStr = `${citations[0].standard} Clause ${citations[0].clause}`;
       }
 
       setMessages((prev) => [...prev, { role: 'assistant', text: ai_text, citation: citationStr }]);
