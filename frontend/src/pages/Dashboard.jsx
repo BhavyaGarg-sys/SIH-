@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, FolderKanban, CheckCircle, Loader2, Rocket, Clock, ArrowRight } from 'lucide-react';
+import { PlusCircle, FolderKanban, CheckCircle, Loader2, Rocket, Clock, ArrowRight, Copy } from 'lucide-react';
 import AppHeader from '../components/AppHeader';
 import { toast } from 'sonner';
 
@@ -10,6 +10,8 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [showProfileBanner, setShowProfileBanner] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +21,34 @@ export default function Dashboard() {
       return;
     }
     fetchProjects();
+    fetchProfile();
   }, [user, navigate]);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/v1/auth/profile');
+      setProfile(response.data.profile);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    const data = {
+      company_name: e.target.company.value,
+      industry_sector: e.target.sector.value,
+      state: e.target.state.value
+    };
+    try {
+      await axios.patch('http://localhost:8000/api/v1/auth/profile', data);
+      toast.success("Profile updated!");
+      fetchProfile();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update profile");
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -57,7 +86,43 @@ export default function Dashboard() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <AppHeader />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col gap-8">
+        
+        {profile && !profile.profile_complete && showProfileBanner && (
+          <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="font-bold text-amber-800">Complete your profile</h3>
+              <p className="text-sm text-amber-700 mt-1 mb-3">Add your industry details to get personalized compliance answers from MānaK AI.</p>
+              <form className="flex flex-wrap gap-3 items-end" onSubmit={handleProfileSubmit}>
+                <div>
+                  <label className="block text-xs font-semibold text-amber-800 mb-1">Company</label>
+                  <input name="company" className="px-3 py-1.5 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 outline-none" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-amber-800 mb-1">Sector</label>
+                  <select name="sector" className="px-3 py-1.5 border border-amber-200 rounded-lg text-sm bg-white focus:ring-amber-500 outline-none" required>
+                    <option value="">Select...</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Import/Export">Import/Export</option>
+                    <option value="MSME">MSME</option>
+                    <option value="Consumer">Consumer</option>
+                    <option value="Startup">Startup</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-amber-800 mb-1">State</label>
+                  <input name="state" className="px-3 py-1.5 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 outline-none" required />
+                </div>
+                <button type="submit" className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-amber-700 transition-colors">Save</button>
+              </form>
+            </div>
+            <button onClick={() => setShowProfileBanner(false)} className="text-amber-600 hover:text-amber-800 p-1 font-bold text-xl leading-none">&times;</button>
+          </div>
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-8">
+
         
         {/* Left Side: Create New Workspace */}
         <div className="w-full lg:w-96 flex-shrink-0">
@@ -158,8 +223,35 @@ export default function Dashboard() {
                     <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-1 pr-4">
                       {proj.title}
                     </h3>
-                    <div className="p-1.5 bg-slate-50 text-slate-400 rounded-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                      <ArrowRight className="w-4 h-4" />
+                    <div className="flex gap-2 items-center">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                        proj.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                        proj.status === 'SUBMITTED' ? 'bg-amber-100 text-amber-700' :
+                        proj.status === 'CERTIFIED' ? 'bg-green-100 text-green-700' :
+                        proj.status === 'ON_HOLD' ? 'bg-red-100 text-red-700' :
+                        'bg-slate-100 text-slate-600'
+                      }`}>
+                        {proj.status ? proj.status.replace('_', ' ') : 'PLANNING'}
+                      </span>
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            const res = await axios.post(`http://localhost:8000/api/v1/projects/${proj.project_id}/duplicate`);
+                            toast.success("Workspace duplicated!");
+                            navigate(`/project/${res.data.project_id}`);
+                          } catch (err) {
+                            toast.error("Failed to duplicate workspace");
+                          }
+                        }}
+                        className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Duplicate Workspace"
+                      >
+                        <Copy size={16} />
+                      </button>
+                      <div className="p-1.5 bg-slate-50 text-slate-400 rounded-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
                     </div>
                   </div>
                   
@@ -188,6 +280,7 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+        </div>
         </div>
       </main>
     </div>

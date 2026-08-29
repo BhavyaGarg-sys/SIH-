@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2, Plus, MessageSquare, ChevronRight } from 'lucide-react';
+import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2, Plus, MessageSquare, ChevronRight, Printer, Bookmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AppHeader from '../components/AppHeader';
 import { toast } from 'sonner';
@@ -97,6 +97,17 @@ export default function ProjectWorkspace() {
     }
   };
 
+  const handleStatusChange = async (e) => {
+    const newStatus = e.target.value;
+    try {
+      await axios.patch(`http://localhost:8000/api/v1/projects/${id}`, { status: newStatus });
+      setProject(prev => ({ ...prev, status: newStatus }));
+      toast.success("Status updated");
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -141,6 +152,24 @@ export default function ProjectWorkspace() {
     }
   };
 
+  const handleExportPdf = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/v1/projects/${id}/export`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `roadmap_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("PDF Exported Successfully!");
+    } catch (err) {
+      toast.error("Failed to export PDF");
+    }
+  };
+
   if (!project) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center flex-col gap-4">
@@ -166,13 +195,39 @@ export default function ProjectWorkspace() {
                   Standard: <span className="text-slate-800 font-bold">{project.standard_id}</span>
                 </div>
               </div>
-              <button 
-                onClick={handleDelete}
-                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                title="Delete Workspace"
-              >
-                <Trash2 size={16} />
-              </button>
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={handleExportPdf}
+                  className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100 hidden sm:block"
+                  title="Export to PDF"
+                >
+                  <Printer size={16} />
+                </button>
+                <select 
+                  value={project.status || 'PLANNING'} 
+                  onChange={handleStatusChange}
+                  className={`text-xs font-bold px-2 py-1 rounded-lg border outline-none cursor-pointer ${
+                    project.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                    project.status === 'SUBMITTED' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                    project.status === 'CERTIFIED' ? 'bg-green-50 border-green-200 text-green-700' :
+                    project.status === 'ON_HOLD' ? 'bg-red-50 border-red-200 text-red-700' :
+                    'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}
+                >
+                  <option value="PLANNING">PLANNING</option>
+                  <option value="IN_PROGRESS">IN PROGRESS</option>
+                  <option value="SUBMITTED">SUBMITTED</option>
+                  <option value="CERTIFIED">CERTIFIED</option>
+                  <option value="ON_HOLD">ON HOLD</option>
+                </select>
+                <button 
+                  onClick={handleDelete}
+                  className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                  title="Delete Workspace"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
             
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-2">
@@ -198,29 +253,66 @@ export default function ProjectWorkspace() {
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Action Items</h3>
             
             <div className="space-y-3 mb-6">
-              {project.steps.map(step => (
+              {project.steps.length === 0 && (
+                <div className="text-center p-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                   <h4 className="font-bold text-slate-700 mb-1">Checklist is empty</h4>
+                   <p className="text-slate-500 text-sm">AI generates steps automatically, or add your own.</p>
+                </div>
+              )}
+              {[...project.steps]
+                .sort((a, b) => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const aOverdue = a.status !== 'COMPLETED' && a.due_date && a.due_date < today;
+                  const bOverdue = b.status !== 'COMPLETED' && b.due_date && b.due_date < today;
+                  if (aOverdue && !bOverdue) return -1;
+                  if (!aOverdue && bOverdue) return 1;
+                  return 0;
+                })
+                .map(step => (
                 <div 
                   key={step.id} 
-                  className={`group flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${
+                  className={`group flex items-start gap-3 p-3.5 rounded-xl border transition-all shadow-sm ${
                     step.status === 'COMPLETED' 
                       ? 'bg-green-50/50 border-green-200' 
                       : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md'
                   }`}
-                  onClick={() => toggleStep(step.id, step.status)}
                 >
-                  <div className="mt-0.5 flex-shrink-0">
+                  <div className="mt-0.5 flex-shrink-0 cursor-pointer" onClick={() => toggleStep(step.id, step.status)}>
                     {step.status === 'COMPLETED' 
                       ? <CheckCircle2 className="text-green-500" size={20} /> 
                       : <Circle className="text-slate-300 group-hover:text-blue-400 transition-colors" size={20} />
                     }
                   </div>
-                  <span className={`text-sm flex-1 leading-snug transition-colors ${
-                    step.status === 'COMPLETED' 
-                      ? 'text-green-700 line-through opacity-70' 
-                      : 'text-slate-700 font-medium group-hover:text-slate-900'
-                  }`}>
-                    {step.title}
-                  </span>
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <span 
+                      className={`text-sm leading-snug transition-colors cursor-pointer ${
+                        step.status === 'COMPLETED' 
+                          ? 'text-green-700 line-through opacity-70' 
+                          : 'text-slate-700 font-medium group-hover:text-slate-900'
+                      }`}
+                      onClick={() => toggleStep(step.id, step.status)}
+                    >
+                      {step.title}
+                    </span>
+                    <input 
+                      type="date"
+                      value={step.due_date || ''}
+                      onChange={async (e) => {
+                        const newDate = e.target.value;
+                        try {
+                          await axios.patch(`http://localhost:8000/api/v1/projects/${id}/checklist/${step.id}`, { due_date: newDate });
+                          setProject(prev => ({ ...prev, steps: prev.steps.map(s => s.id === step.id ? { ...s, due_date: newDate } : s) }));
+                        } catch (err) {
+                          toast.error("Failed to update date");
+                        }
+                      }}
+                      className={`mt-1.5 text-xs px-2 py-0.5 rounded border outline-none w-max ${
+                        step.status !== 'COMPLETED' && step.due_date && step.due_date < new Date().toISOString().split('T')[0]
+                          ? 'bg-red-50 border-red-200 text-red-600 font-semibold'
+                          : 'bg-slate-50 border-slate-200 text-slate-500'
+                      }`}
+                    />
+                  </div>
                   <button 
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -327,8 +419,11 @@ export default function ProjectWorkspace() {
               </div>
             ))}
             {sessions.length === 0 && (
-              <div className="p-6 text-center text-slate-400 text-sm font-medium">
-                No discussions yet
+              <div className="p-6 text-center text-slate-500 text-sm flex flex-col items-center">
+                <MessageSquare className="w-8 h-8 text-slate-300 mb-2" />
+                <h4 className="font-bold text-slate-700 mb-1">Nothing here yet</h4>
+                <p>Ask MānaK anything about BIS standards or certification.</p>
+                <button onClick={handleNewChat} className="mt-3 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-100 transition-colors">New Chat</button>
               </div>
             )}
           </div>
@@ -379,19 +474,40 @@ export default function ProjectWorkspace() {
                     {msg.citations && msg.citations.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-2">
                         {msg.citations.map((cit, idx) => (
-                          <button 
-                            key={idx} 
-                            onClick={() => {
-                              const filename = cit.standard.split('/').pop().split('\\').pop();
-                              setPdfViewerUrl(`http://localhost:8000/pdfs/${filename}`);
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-xs font-semibold transition-colors shadow-sm group"
-                            title={`Open ${cit.standard}`}
-                          >
-                            <FileText size={12} className="group-hover:scale-110 transition-transform" />
-                            <span className="truncate max-w-[150px]">{cit.standard}</span>
-                            <span className="text-blue-400">({cit.clause})</span>
-                          </button>
+                          <div key={idx} className="flex items-center bg-blue-50 border border-blue-200 rounded-full overflow-hidden shadow-sm group">
+                            <button 
+                              onClick={() => {
+                                const filename = cit.standard.split('/').pop().split('\\').pop();
+                                setPdfViewerUrl(`http://localhost:8000/pdfs/${filename}`);
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors"
+                              title={`Open ${cit.standard}`}
+                            >
+                              <FileText size={12} className="group-hover:scale-110 transition-transform" />
+                              <span className="truncate max-w-[150px]">{cit.standard}</span>
+                              <span className="text-blue-400">({cit.clause})</span>
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  await axios.post('http://localhost:8000/api/v1/bookmarks', {
+                                    standard_ref: cit.standard,
+                                    clause_text: cit.clause || cit.snippet || "Relevant section",
+                                    pdf_path: cit.standard,
+                                    page_number: cit.page ? parseInt(cit.page) : null
+                                  });
+                                  toast.success("Standard saved to Bookmarks!");
+                                } catch(err) {
+                                  toast.error("Failed to save bookmark");
+                                }
+                              }}
+                              className="px-2 py-1.5 border-l border-blue-200 text-blue-400 hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                              title="Bookmark this standard"
+                            >
+                              <Bookmark size={12} />
+                            </button>
+                          </div>
                         ))}
                       </div>
                     )}

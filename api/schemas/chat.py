@@ -21,3 +21,4 @@ class ChatMessageResponse(BaseModel):
     ai_text: str
     ui_widget: Optional[UIWidget] = None
     citations: List[Citation] = []
+    intent: Optional[str] = None

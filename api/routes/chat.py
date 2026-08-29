@@ -81,7 +81,8 @@ async def get_chat_history(session_id: str, current_user: dict = Depends(get_cur
             "role": msg["role"],
             "content": msg["content"],
             "ui_widget": msg.get("ui_widget"),
-            "citations": msg.get("citations", [])
+            "citations": msg.get("citations", []),
+            "intent": msg.get("intent")
         })
     return formatted_msgs
 
@@ -107,8 +108,11 @@ async def process_chat_message(
     # 1. Extract Intent using Gemini Structured Output
     intent_data = await extract_intent(request.message)
     
+    db_user = await db.users.find_one({"email": current_user["email"]})
+    user_profile = db_user.get("profile") if db_user else None
+    
     # 2. RAG Generation (Internal Service Call)
-    ai_text, citations = await generate_rag_response(request.message)
+    ai_text, citations = await generate_rag_response(request.message, user_profile=user_profile)
     
     ui_widget = None
     
@@ -141,7 +145,8 @@ async def process_chat_message(
         session_id=session_id,
         ai_text=ai_text,
         ui_widget=ui_widget,
-        citations=citations
+        citations=citations,
+        intent=intent_data.intent if hasattr(intent_data, 'intent') else "GENERAL"
     )
     
     # Save Assistant Message
@@ -152,7 +157,8 @@ async def process_chat_message(
         "role": "assistant",
         "content": ai_text,
         "ui_widget": ui_widget.dict() if ui_widget else None,
-        "citations": [c.dict() for c in citations]
+        "citations": [c.dict() for c in citations],
+        "intent": intent_data.intent if hasattr(intent_data, 'intent') else "GENERAL"
     })
     
     return response

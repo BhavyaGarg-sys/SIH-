@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 import ProjectWorkspace from './pages/ProjectWorkspace';
+import Bookmarks from './pages/Bookmarks';
 import './App.css';
 
 // Protected Route Component
@@ -49,6 +50,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProjectWorkspace />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/bookmarks" 
+        element={
+          <ProtectedRoute>
+            <Bookmarks />
           </ProtectedRoute>
         } 
       />

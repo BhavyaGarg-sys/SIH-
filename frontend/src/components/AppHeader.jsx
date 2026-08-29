@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, LogOut, LayoutDashboard, MessageSquare } from 'lucide-react';
+import { ShieldCheck, LogOut, LayoutDashboard, MessageSquare, Bookmark } from 'lucide-react';
 
 export default function AppHeader() {
   const navigate = useNavigate();
@@ -43,6 +43,16 @@ export default function AppHeader() {
             }`}
           >
             <MessageSquare size={18} /> AI Research
+          </button>
+          <button 
+            onClick={() => navigate('/bookmarks')} 
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+              location.pathname === '/bookmarks'
+                ? 'bg-slate-800 text-white font-semibold shadow-inner' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <Bookmark size={18} /> Saved Standards
           </button>
         </nav>
       </div>

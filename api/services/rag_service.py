@@ -9,7 +9,7 @@ from api.schemas.chat import Citation
 _retriever = Retriever()
 _llm = LLMWrapper()
 
-async def generate_rag_response(query: str, top_k: int = 3) -> Tuple[str, List[Citation]]:
+async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict = None) -> Tuple[str, List[Citation]]:
     """
     Internal service function to orchestrate the RAG pipeline.
     Retrieves context from FAISS and generates an answer using the LLM.
@@ -25,6 +25,11 @@ async def generate_rag_response(query: str, top_k: int = 3) -> Tuple[str, List[C
             clause=f"Page {res.get('page', '?')}"
         ) for res in results
     ]
+    
+    # Prepend user profile context if available
+    if user_profile and user_profile.get('profile_complete'):
+        profile_str = f"[User context: {user_profile.get('industry_sector', 'User')} in {user_profile.get('state', 'India')}, Company: {user_profile.get('company_name', 'Unknown')}]\n"
+        query = profile_str + query
     
     # 3. Format prompt and generate AI text
     prompt = format_rag_prompt(query=query, context_chunks=context_texts)
