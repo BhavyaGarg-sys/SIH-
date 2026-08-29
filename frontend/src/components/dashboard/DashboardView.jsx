@@ -29,6 +29,10 @@ export default function DashboardView({ setCurrentView }) {
   const [activitySearch, setActivitySearch] = useState('');
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  const [showModal, setShowModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const navigate = window.location;
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -39,14 +43,33 @@ export default function DashboardView({ setCurrentView }) {
         console.error('Failed to load dashboard data', err);
         if (err.response && err.response.status === 401) {
           localStorage.removeItem('token');
-          window.location.href = '/login';
+          navigate.href = '/login';
         }
       } finally {
         setLoading(false);
       }
     };
     fetchDashboard();
-  }, []);
+  }, [navigate]);
+
+  const handleStartCertification = async (e) => {
+    e.preventDefault();
+    const product = e.target.product.value;
+    const role = e.target.role.value;
+    if(!product) return;
+    
+    setIsGenerating(true);
+    try {
+      const res = await axios.post('http://localhost:8000/api/v1/projects/generate', { product, role });
+      if(res.data.project_id) {
+         navigate.href = `/workspace/${res.data.project_id}`;
+      }
+    } catch (err) {
+      console.error(err);
+      setIsGenerating(false);
+      alert("Failed to create workspace");
+    }
+  };
 
   const sidebarLinks = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -160,14 +183,62 @@ export default function DashboardView({ setCurrentView }) {
                   <span>Search Code</span>
                 </button>
                 <button
-                  onClick={() => setCurrentView('comparison')}
+                  onClick={() => setShowModal(true)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-sm shadow-brand-500/20 transition"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>New Research</span>
+                  <span>New Workspace</span>
                 </button>
               </div>
             </div>
+
+            {/* Modal Overlay */}
+            {showModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                      <h2 className="text-xl font-extrabold text-slate-900">Start Certification</h2>
+                      <p className="text-xs text-slate-500 mt-1">Generate a compliance roadmap for your product.</p>
+                    </div>
+                    <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition p-2">
+                      ✕
+                    </button>
+                  </div>
+                  <form onSubmit={handleStartCertification} className="p-6 space-y-5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Product Name or Category</label>
+                      <input 
+                        name="product" 
+                        placeholder="e.g. Steel Rebar, LED Bulbs, Cement" 
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all outline-none" 
+                        required 
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Your Role</label>
+                      <select name="role" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all outline-none">
+                        <option value="Manufacturer">Manufacturer</option>
+                        <option value="Importer">Importer</option>
+                        <option value="Foreign Manufacturer">Foreign Manufacturer</option>
+                        <option value="Quality Consultant">Quality Consultant</option>
+                      </select>
+                    </div>
+                    <div className="pt-2">
+                      <button 
+                        type="submit" 
+                        disabled={isGenerating}
+                        className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-3 rounded-xl font-bold shadow-sm shadow-brand-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                        {isGenerating ? 'Generating Roadmap...' : 'Create AI Workspace'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
             {/* 4 Metric Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
