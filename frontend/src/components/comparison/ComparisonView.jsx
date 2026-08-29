@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { COMPARISON_REPORT } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Sparkles, 
   Clock, 
@@ -15,7 +15,8 @@ import {
   Copy,
   CheckCircle2,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 
 export default function ComparisonView({ setCurrentView }) {
@@ -24,32 +25,56 @@ export default function ComparisonView({ setCurrentView }) {
   const [followUpAnswer, setFollowUpAnswer] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loadingNewSynthesis, setLoadingNewSynthesis] = useState(false);
+  const [COMPARISON_REPORT, setComparisonReport] = useState(null);
+
+  useEffect(() => {
+    const fetchComparison = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/v1/data/comparison-report');
+        setComparisonReport(response.data);
+      } catch (err) {
+        console.error('Failed to fetch comparison report', err);
+      }
+    };
+    fetchComparison();
+  }, []);
+
+  if (!COMPARISON_REPORT) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+      </div>
+    );
+  }
 
   const handleCitationClick = (citationId) => {
     setActiveCitation(citationId);
   };
 
-  const handleFollowUpClick = (question) => {
+  const handleFollowUpClick = async (question) => {
     setSelectedFollowUp(question);
-    // Simulate AI dynamic response
-    if (question.includes('Response Reduction')) {
+    setLoadingNewSynthesis(true);
+    try {
+      const response = await axios.post('http://localhost:8000/api/v1/chat/message', {
+        message: question,
+        interaction_mode: "guided_ui",
+      });
+      const { ai_text, citations } = response.data;
+      let citationStr = citations && citations.length > 0 ? `${citations[0].standard} Clause ${citations[0].clause}` : "Generated via Standard Comparison";
       setFollowUpAnswer({
         q: question,
-        ans: "Under IS 1893 (Table 9), Special Ductile RC Shear Walls (SDSW) paired with ductile framing are assigned an R-factor of 5.0 (Ordinary RC Shear Walls are limited to R=3.0). Using R=5.0 is legally conditional on meeting the boundary-element detailing provisions of IS 13920:2016 Clause 9.",
-        clause: "IS 1893:2016 Cl. 6.4.2 & IS 13920:2016 Cl. 9.1"
+        ans: ai_text,
+        clause: citationStr
       });
-    } else if (question.includes('weak-beam strong-column')) {
+    } catch (err) {
+      console.error("Chat error", err);
       setFollowUpAnswer({
         q: question,
-        ans: "IS 13920:2016 Clause 7.2.1 mandates that the sum of nominal flexural strengths of columns meeting at a joint along each principal axis shall be at least 1.4 times (140%) the sum of nominal flexural strengths of beams framing into that joint.",
-        clause: "IS 13920:2016 Cl. 7.2.1 (Strong Column / Weak Beam Rule)"
+        ans: "Error generating synthesis. Please try again.",
+        clause: ""
       });
-    } else {
-      setFollowUpAnswer({
-        q: question,
-        ans: "IS 13920:2016 Clause 5.3 strictly limits reinforcing steel in seismic zones III, IV, and V to high-strength deformed bars with elongation >= 14.5% and actual tensile strength >= 1.15x actual yield strength (e.g. Fe 500D, Fe 550D).",
-        clause: "IS 13920:2016 Cl. 5.3"
-      });
+    } finally {
+      setLoadingNewSynthesis(false);
     }
   };
 
@@ -215,7 +240,13 @@ export default function ComparisonView({ setCurrentView }) {
               </div>
 
               {/* Dynamic Follow Up Question Answer Display */}
-              {followUpAnswer && (
+              {loadingNewSynthesis && (
+                <div className="mt-8 p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center min-h-[150px]">
+                  <Loader2 className="w-6 h-6 text-brand-600 animate-spin mb-3" />
+                  <p className="text-sm font-medium text-slate-600">Generating AI synthesis...</p>
+                </div>
+              )}
+              {!loadingNewSynthesis && followUpAnswer && (
                 <div className="mt-8 p-5 rounded-xl bg-gradient-to-r from-brand-50 via-indigo-50/40 to-white border-2 border-brand-200 animate-in fade-in">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-bold text-brand-700 font-mono flex items-center gap-1.5">
