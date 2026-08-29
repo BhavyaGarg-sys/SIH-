@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { STANDARD_DETAIL } from '../../data/mockData';
 import { 
   BookOpen, 
@@ -35,7 +36,7 @@ export default function DocumentReaderView({ setCurrentView }) {
   ]);
   const [tableCopied, setTableCopied] = useState(false);
 
-  const handleAskQuestion = (e) => {
+  const handleAskQuestion = async (e) => {
     e.preventDefault();
     if (!customQuestion.trim()) return;
 
@@ -46,18 +47,25 @@ export default function DocumentReaderView({ setCurrentView }) {
     const newMessages = [...messages, { role: 'user', text: userQ }];
     setMessages(newMessages);
 
-    // Simulate AI response
-    setTimeout(() => {
-      let aiText = "Under IS 800:2007 Section 4, all material parameters must conform to IS 2062 test certificates. For high ductility zones, the ratio of ultimate tensile strength to yield stress shall not be less than 1.15.";
-      let cite = "IS 800:2007 Clause 4.1.2";
+    try {
+      // Hit actual backend endpoint
+      const response = await axios.post('http://localhost:8000/api/v1/chat/message', {
+        message: userQ,
+        interaction_mode: "guided_ui",
+      });
 
-      if (userQ.toLowerCase().includes('410') || userQ.toLowerCase().includes('yield')) {
-        aiText = "Grade Fe 410 structural steel possesses a minimum nominal yield strength of 250 MPa for thickness <= 20mm and 23% minimum elongation.";
-        cite = "IS 800:2007 Table 1";
+      const { ai_text, citations } = response.data;
+      
+      let citationStr = null;
+      if (citations && citations.length > 0) {
+        citationStr = \`\${citations[0].standard} Clause \${citations[0].clause}\`;
       }
 
-      setMessages([...newMessages, { role: 'assistant', text: aiText, citation: cite }]);
-    }, 600);
+      setMessages((prev) => [...prev, { role: 'assistant', text: ai_text, citation: citationStr }]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages((prev) => [...prev, { role: 'assistant', text: "Sorry, I am having trouble connecting to the backend right now." }]);
+    }
   };
 
   const handleCopyTable = () => {
