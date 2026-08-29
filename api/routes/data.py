@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from api.routes.auth import get_current_user
 from typing import List, Optional
 
 router = APIRouter()
@@ -27,10 +28,10 @@ async def get_schemes():
 
 import json
 import re
-from api.services.rag_service import generate_rag_response
+from api.services.rag_service import _llm
 
 @router.get("/comparison-report")
-async def get_comparison_report(topic: str = "Seismic Detailing Comparison: IS 1893 vs IS 13920"):
+async def get_comparison_report(topic: str = "Seismic Detailing Comparison: IS 1893 vs IS 13920", current_user: dict = Depends(get_current_user)):
     """Dynamically generate structured comparison data for ComparisonView using the AI."""
     
     prompt = f"""
@@ -61,9 +62,10 @@ async def get_comparison_report(topic: str = "Seismic Detailing Comparison: IS 1
     Include EXACTLY 3 differences, 2 citing sources, and 3 follow-up questions.
     """
     
-    ai_text, citations = await generate_rag_response(prompt, top_k=3)
-    
     try:
+        # Generate answer directly from LLM memory, bypassing RAG since these standard PDFs might not be uploaded yet
+        ai_text = _llm.generate(prompt)
+        
         # Strip any accidental markdown formatting (like ```json ... ```)
         clean_text = re.sub(r'```(?:json)?\n?', '', ai_text).replace('```', '').strip()
         data = json.loads(clean_text)
