@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import LandingPage from './components/landing/LandingPage';
@@ -7,29 +8,22 @@ import DashboardView from './components/dashboard/DashboardView';
 import DocumentReaderView from './components/reader/DocumentReaderView';
 import DesignSystemView from './components/design-system/DesignSystemView';
 import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search } from 'lucide-react';
+import { AuthProvider } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 
-export default function App() {
-  const [currentView, setCurrentView] = useState('landing');
+function AppContent() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentView = location.pathname === '/' ? 'landing' : location.pathname.substring(1).split('/')[0];
 
-  const renderView = () => {
-    switch (currentView) {
-      case 'landing':
-        return <LandingPage setCurrentView={setCurrentView} />;
-      case 'comparison':
-        return <ComparisonView setCurrentView={setCurrentView} />;
-      case 'dashboard':
-        return <DashboardView setCurrentView={setCurrentView} />;
-      case 'reader':
-        return <DocumentReaderView setCurrentView={setCurrentView} />;
-      case 'design-system':
-        return <DesignSystemView />;
-      default:
-        return <LandingPage setCurrentView={setCurrentView} />;
-    }
+  const setCurrentView = (view) => {
+    if (view === 'landing') navigate('/');
+    else navigate(\/\\);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const quickJumpButtons = [
-    { id: 'landing', label: '1. Landing Page', icon: Search },
+    { id: '', label: '1. Landing Page', icon: Search },
     { id: 'comparison', label: '2. AI Compare Report', icon: Layers },
     { id: 'dashboard', label: '3. Engineer Dashboard', icon: LayoutDashboard },
     { id: 'reader', label: '4. IS 800 Standard Reader', icon: FileText },
@@ -48,41 +42,49 @@ export default function App() {
         <div className="flex flex-wrap items-center gap-1.5">
           {quickJumpButtons.map((btn) => {
             const Icon = btn.icon;
-            const isActive = currentView === btn.id;
+            const isActive = currentView === (btn.id || 'landing');
             return (
-              <button
+              <Link
                 key={btn.id}
-                onClick={() => {
-                  setCurrentView(btn.id);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${
-                  isActive
-                    ? 'bg-brand-600 text-white font-bold shadow-sm'
-                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+                to={/\}
+                className={\lex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition \\}
               >
                 <Icon className="w-3 h-3" />
                 <span>{btn.label}</span>
-              </button>
+              </Link>
             );
           })}
         </div>
       </aside>
 
       {/* Main Navigation Header */}
-      <Navbar 
-        currentView={currentView} 
-        setCurrentView={setCurrentView} 
-      />
+      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
 
       {/* Dynamic View Component */}
       <main className="flex-grow">
-        {renderView()}
+        <Routes>
+          <Route path="/" element={<LandingPage setCurrentView={setCurrentView} />} />
+          <Route path="/comparison" element={<ComparisonView setCurrentView={setCurrentView} />} />
+          <Route path="/dashboard" element={<DashboardView setCurrentView={setCurrentView} />} />
+          <Route path="/reader" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
+          <Route path="/reader/:projectId" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
+          <Route path="/design-system" element={<DesignSystemView setCurrentView={setCurrentView} />} />
+        </Routes>
       </main>
 
       {/* Global Footer */}
       <Footer setCurrentView={setCurrentView} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
+        <Toaster position="bottom-right" />
+      </Router>
+    </AuthProvider>
   );
 }
