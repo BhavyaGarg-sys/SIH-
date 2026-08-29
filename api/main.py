@@ -9,6 +9,7 @@ from api.routes.chat import router as chat_router
 from api.routes.projects import router as projects_router
 from api.routes.data import router as data_router
 from api.routes.bookmarks import router as bookmarks_router
+from api.routes.dashboard import router as dashboard_router
 from api.core.database import connect_to_mongo, close_mongo_connection
 
 @asynccontextmanager
@@ -20,7 +21,7 @@ async def lifespan(app: FastAPI):
     await close_mongo_connection()
 
 app = FastAPI(
-    title="MānaK AI - Compliance Tracker API",
+    title="M?naK AI - Compliance Tracker API",
     description="Backend API for the SIH BIS Compliance Platform",
     version="0.2.0",
     lifespan=lifespan
@@ -44,6 +45,7 @@ app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(projects_router, prefix="/api/v1/projects", tags=["Projects"])
 app.include_router(data_router, prefix="/api/v1/data", tags=["Domain Data"])
 app.include_router(bookmarks_router, prefix="/api/v1/bookmarks", tags=["Bookmarks"])
+app.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["Dashboard"])
 
 # Mount static files for PDFs
 docs_path = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
