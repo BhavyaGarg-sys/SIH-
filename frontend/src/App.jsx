@@ -5,7 +5,7 @@ import Footer from './components/layout/Footer';
 import LandingPage from './components/landing/LandingPage';
 import ComparisonView from './components/comparison/ComparisonView';
 import DashboardView from './components/dashboard/DashboardView';
-import DocumentReaderView from './components/reader/DocumentReaderView';
+
 
 import Login from './pages/Login';
 import ProjectWorkspace from './pages/ProjectWorkspace';
@@ -49,8 +49,8 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/comparison" element={<ComparisonView setCurrentView={setCurrentView} />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardView setCurrentView={setCurrentView} /></ProtectedRoute>} />
-          <Route path="/reader" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
-          <Route path="/reader/:projectId" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
+
+
           <Route path="/workspace/:id" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
           <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
         </Routes>

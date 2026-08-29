@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   BookOpen, 
   Search, 
@@ -27,7 +27,7 @@ export default function Navbar({ currentView, setCurrentView, onSearchSelect }) 
     { id: 'landing', label: 'Standards', icon: Search },
     { id: 'comparison', label: 'Research & Compare', icon: Layers, badge: 'AI' },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'reader', label: 'IS 800 Reader', icon: FileText },
+
   ];
 
   const handleNavClick = (viewId) => {

@@ -3,9 +3,6 @@ import HeroSection from './HeroSection';
 import TrustBanner from './TrustBanner';
 import FeaturesGrid from './FeaturesGrid';
 import WorkflowSteps from './WorkflowSteps';
-import StatsBanner from './StatsBanner';
-import Testimonials from './Testimonials';
-import PricingTiers from './PricingTiers';
 
 export default function LandingPage({ setCurrentView }) {
   return (
@@ -17,11 +14,6 @@ export default function LandingPage({ setCurrentView }) {
       <TrustBanner />
       <FeaturesGrid setCurrentView={setCurrentView} />
       <WorkflowSteps onStepClick={(view) => setCurrentView(view)} />
-      <StatsBanner />
-      <Testimonials />
-      <PricingTiers onSelectPlan={(plan) => {
-        alert(`Selected ${plan} plan. Redirecting to checkout portal.`);
-      }} />
     </div>
   );
 }

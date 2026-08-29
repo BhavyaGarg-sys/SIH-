@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { FEATURES } from '../../data/standardData';
+import { FEATURES } from '../../data/landingData';
 import { Search, FileText, Network, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function FeaturesGrid({ setCurrentView }) {
