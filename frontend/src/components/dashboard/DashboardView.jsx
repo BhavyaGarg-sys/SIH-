@@ -75,13 +75,8 @@ export default function DashboardView({ setCurrentView }) {
   };
 
   const sidebarLinks = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'recent', label: 'Recent Documents', icon: Clock },
-    { id: 'collections', label: 'Collections', icon: FolderLock },
-    { id: 'summaries', label: 'Saved Summaries', icon: Bookmark },
-    { id: 'alerts', label: 'Alerts & Updates', icon: Bell, badge: '5' },
-    { id: 'checker', label: 'Compliance Checker', icon: ShieldCheck },
-    { id: 'api', label: 'API Keys', icon: Key },
+    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    { id: 'projects', label: 'My Projects', icon: FolderLock },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
