@@ -1,0 +1,33 @@
+from typing import Tuple, List
+from src.retrieval.retriever import Retriever
+from src.generation.llm_wrapper import LLMWrapper
+from src.generation.prompt import format_rag_prompt
+from api.schemas.chat import Citation
+
+# Initialize ML models globally inside the service layer
+# This ensures they only load into memory once when the app starts
+_retriever = Retriever()
+_llm = LLMWrapper()
+
+async def generate_rag_response(query: str, top_k: int = 3) -> Tuple[str, List[Citation]]:
+    """
+    Internal service function to orchestrate the RAG pipeline.
+    Retrieves context from FAISS and generates an answer using the LLM.
+    """
+    # 1. Fetch relevant context from Vector DB
+    results = _retriever.retrieve(query, top_k=top_k)
+    
+    # 2. Extract texts and format citations
+    context_texts = [res['text'] for res in results]
+    citations = [
+        Citation(
+            standard=res.get('source', 'Unknown Document'),
+            clause=f"Page {res.get('page', '?')}"
+        ) for res in results
+    ]
+    
+    # 3. Format prompt and generate AI text
+    prompt = format_rag_prompt(query=query, context_chunks=context_texts)
+    ai_text = _llm.generate(prompt)
+    
+    return ai_text, citations

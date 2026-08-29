@@ -30,6 +30,15 @@ pydantic
 # Utilities & Configuration
 python-dotenv
 tqdm
+redis
 
 # Testing
 pytest
+
+# Database & Auth
+motor
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+
+openai
