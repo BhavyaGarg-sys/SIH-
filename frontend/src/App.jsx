@@ -7,6 +7,7 @@ import ComparisonView from './components/comparison/ComparisonView';
 import DashboardView from './components/dashboard/DashboardView';
 import DocumentReaderView from './components/reader/DocumentReaderView';
 import DesignSystemView from './components/design-system/DesignSystemView';
+import Login from './pages/Login';
 import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
@@ -18,7 +19,7 @@ function AppContent() {
 
   const setCurrentView = (view) => {
     if (view === 'landing') navigate('/');
-    else navigate(\/\\);
+    else navigate(`/${view}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -40,6 +41,7 @@ function AppContent() {
           <span className="font-mono font-bold text-white text-[11px]">BIS Intelligence Prototype Explorer:</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <Link to="/login" className="px-2 py-1 bg-brand-600 text-white rounded font-bold text-[10px]">LOGIN</Link>
           {quickJumpButtons.map((btn) => {
             const Icon = btn.icon;
             const isActive = currentView === (btn.id || 'landing');
@@ -64,6 +66,7 @@ function AppContent() {
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<LandingPage setCurrentView={setCurrentView} />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/comparison" element={<ComparisonView setCurrentView={setCurrentView} />} />
           <Route path="/dashboard" element={<DashboardView setCurrentView={setCurrentView} />} />
           <Route path="/reader" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
