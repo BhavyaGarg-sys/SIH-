@@ -8,7 +8,10 @@ import DashboardView from './components/dashboard/DashboardView';
 import DocumentReaderView from './components/reader/DocumentReaderView';
 import DesignSystemView from './components/design-system/DesignSystemView';
 import Login from './pages/Login';
-import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search } from 'lucide-react';
+import ProjectWorkspace from './pages/ProjectWorkspace';
+import Bookmarks from './pages/Bookmarks';
+import OldDashboard from './pages/OldDashboard';
+import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search, Bookmark } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -29,6 +32,8 @@ function AppContent() {
     { id: 'dashboard', label: '3. Engineer Dashboard', icon: LayoutDashboard },
     { id: 'reader', label: '4. IS 800 Standard Reader', icon: FileText },
     { id: 'design-system', label: '5. Design System Spec', icon: Palette },
+    { id: 'old-dashboard', label: 'Legacy Dashboard', icon: LayoutDashboard },
+    { id: 'bookmarks', label: 'Bookmarks', icon: Bookmark },
   ];
 
   return (
@@ -48,8 +53,12 @@ function AppContent() {
             return (
               <Link
                 key={btn.id}
-                to={/\}
-                className={\lex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition \\}
+                to={`/${btn.id}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${
+                  isActive
+                    ? 'bg-brand-600 text-white font-bold shadow-sm'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
               >
                 <Icon className="w-3 h-3" />
                 <span>{btn.label}</span>
@@ -72,6 +81,9 @@ function AppContent() {
           <Route path="/reader" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
           <Route path="/reader/:projectId" element={<DocumentReaderView setCurrentView={setCurrentView} />} />
           <Route path="/design-system" element={<DesignSystemView setCurrentView={setCurrentView} />} />
+          <Route path="/workspace/:id" element={<ProjectWorkspace />} />
+          <Route path="/bookmarks" element={<Bookmarks />} />
+          <Route path="/old-dashboard" element={<OldDashboard />} />
         </Routes>
       </main>
 
