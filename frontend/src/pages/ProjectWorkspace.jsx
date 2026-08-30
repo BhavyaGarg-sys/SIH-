@@ -464,7 +464,7 @@ export default function ProjectWorkspace() {
             
             <div className="max-w-3xl mx-auto space-y-6 pb-4">
               {messages.map((msg, index) => (
-                <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div key={msg.id || index} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
                     msg.role === 'user' ? 'bg-indigo-100 text-indigo-700' : 'bg-gradient-to-br from-brand-500 to-indigo-600 text-white'
                   }`}>

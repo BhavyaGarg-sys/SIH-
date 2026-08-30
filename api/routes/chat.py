@@ -109,6 +109,7 @@ async def get_chat_history(session_id: str, current_user: dict = Depends(get_cur
     formatted_msgs = []
     for msg in messages:
         formatted_msgs.append({
+            "id": str(msg["_id"]),
             "role": msg["role"],
             "content": msg["content"],
             "ui_widget": msg.get("ui_widget"),
