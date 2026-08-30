@@ -53,8 +53,10 @@ function AppContent() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardView setCurrentView={setCurrentView} /></ProtectedRoute>} />
 
 
-          <Route path="/workspace/:id" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
+                    <Route path="/workspace/:id" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
           <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
+          <Route path="/report/:id" element={<ProtectedRoute><ReportTemplate /></ProtectedRoute>} />
+          <Route path="/comparison/:id" element={<ProtectedRoute><AmendmentComparison /></ProtectedRoute>} />
         </Routes>
       </main>
 
