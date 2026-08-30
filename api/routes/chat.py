@@ -4,6 +4,7 @@ from typing import List
 from api.schemas.chat import ChatMessageRequest, ChatMessageResponse, UIWidget, Citation
 from api.services.intent_router import extract_intent
 from api.services.rag_service import generate_rag_response
+from api.services.report_generator import generate_chat_report\nfrom api.services.amendment_service import generate_amendment_comparison
 from api.core.database import get_database
 from api.core.deps import get_current_user
 from api.routes.projects import get_project_with_role
@@ -69,7 +70,20 @@ async def get_project_sessions(project_id: str, current_user: dict = Depends(get
 @router.delete("/session/{session_id}")
 async def delete_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
     db = get_database()
-    result = await db.chats.delete_many({"user_email": current_user["email"], "session_id": session_id})
+    
+    first_msg = await db.chats.find_one({"session_id": session_id})
+    if not first_msg:
+        return {"deleted_count": 0}
+        
+    if first_msg.get("project_id"):
+        # Ensure user is OWNER or EDITOR
+        await get_project_with_role(db, first_msg["project_id"], current_user, required_roles=["OWNER", "EDITOR"])
+        # Delete entire session regardless of user_email
+        result = await db.chats.delete_many({"session_id": session_id})
+    else:
+        # Personal session
+        result = await db.chats.delete_many({"user_email": current_user["email"], "session_id": session_id})
+        
     return {"deleted_count": result.deleted_count}
 
 @router.get("/history/{session_id}")
@@ -137,7 +151,60 @@ async def process_chat_message(
     ui_widget = None
     
     # 3. Attach UI Widgets if applicable
-    if intent_data.intent == "CERTIFICATION" and request.interaction_mode == "guided_ui":
+    if intent_data.intent == "EXPORT_REPORT":
+        # Fetch the chat history for the LLM
+        cursor = db.chats.find({"session_id": session_id}).sort("_id", 1)
+        chat_history = await cursor.to_list(length=100)
+        
+        report_data = await generate_chat_report(chat_history, user_profile)
+        
+        # Save to reports collection
+        report_doc = {
+            "session_id": session_id,
+            "project_id": project_id,
+            "user_email": current_user["email"],
+            "data": report_data
+        }
+        result = await db.reports.insert_one(report_doc)
+        report_id = str(result.inserted_id)
+        
+        # Create a report link widget
+        ui_widget = UIWidget(
+            type="REPORT_LINK",
+            data={
+                "report_id": report_id,
+                "title": report_data.get("title", "Exported Report")
+            }
+        )
+        ai_text = "I've generated a formal PDF report based on our conversation. Click the button below to view and download it."
+        citations = []
+        
+    elif intent_data.intent == "COMPARE_AMENDMENTS":
+        product = intent_data.product or "the requested product"
+        amendment_data = await generate_amendment_comparison(product, intent_data.is_number)
+        
+        # Save to reports collection with type flag
+        report_doc = {
+            "session_id": session_id,
+            "project_id": project_id,
+            "user_email": current_user["email"],
+            "type": "AMENDMENT",
+            "data": amendment_data
+        }
+        result = await db.reports.insert_one(report_doc)
+        report_id = str(result.inserted_id)
+        
+        ui_widget = UIWidget(
+            type="COMPARISON_LINK",
+            data={
+                "comparison_id": report_id,
+                "title": amendment_data.get("title", "Amendment Comparison")
+            }
+        )
+        ai_text = f"I've generated a side-by-side comparison of the recent amendments for {product}. Click below to open it in a new page."
+        citations = []
+
+    elif intent_data.intent == "CERTIFICATION" and request.interaction_mode == "guided_ui":
         product = intent_data.product or "your product"
         standard = intent_data.is_number or "IS 16102"
         
