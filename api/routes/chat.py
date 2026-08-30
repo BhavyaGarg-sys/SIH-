@@ -141,14 +141,15 @@ async def process_chat_message(
         "content": request.message
     })
     
-    # 1. Extract Intent using Gemini Structured Output
-    intent_data = await extract_intent(request.message)
-    
     db_user = await db.users.find_one({"email": current_user["email"]})
     user_profile = db_user.get("profile") if db_user else None
     
-    # 2. RAG Generation (Internal Service Call)
-    ai_text, citations = await generate_rag_response(request.message, user_profile=user_profile)
+    # 1 & 2. Run Intent Extraction and RAG Generation IN PARALLEL
+    import asyncio
+    intent_data, (ai_text, citations) = await asyncio.gather(
+        extract_intent(request.message),
+        generate_rag_response(request.message, user_profile=user_profile)
+    )
     
     ui_widget = None
     
