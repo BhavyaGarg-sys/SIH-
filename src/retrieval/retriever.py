@@ -1,9 +1,11 @@
 import logging
 import hashlib
 import json
+import time
+from collections import OrderedDict
 import numpy as np
 import redis
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from src.embeddings.embedding_model import EmbeddingModel
 from src.vectorstore.faiss_store import FAISSStore
@@ -25,8 +27,10 @@ class Retriever:
         self.embedding_model = embedding_model or EmbeddingModel()
         self.vector_store = vector_store or FAISSStore()
         
-        # In-memory fallback
-        self._memory_cache: Dict[str, str] = {}
+        # In-memory fallback with TTL + LRU eviction
+        self._max_memory_cache_size: int = 1024
+        self._default_ttl: int = 1800  # 30 minutes, matching Redis TTL
+        self._memory_cache: OrderedDict[str, Tuple[str, float]] = OrderedDict()  # key -> (json_data, expiry_ts)
         
         # Redis connection
         try:
@@ -38,12 +42,15 @@ class Retriever:
             logger.warning(f"Redis connection failed: {e}. Falling back to in-memory dictionary cache.")
             self._use_redis = False
 
-    def _generate_cache_key(self, query_vec: np.ndarray) -> str:
-        """Generates a deterministic Redis key schema by rounding and hashing the vector."""
-        # Normalize micro-variations across near-identical embedding spaces
-        rounded_vec = np.round(query_vec, 3)
+    def _generate_cache_key(self, query_vec: np.ndarray, top_k: int) -> str:
+        """Generates a deterministic Redis key schema by rounding and hashing the vector + top_k."""
+        # 6-decimal rounding: tight enough to avoid merging distinct queries,
+        # loose enough to collapse true floating-point jitter.
+        rounded_vec = np.round(query_vec, 6)
         vec_bytes = rounded_vec.tobytes()
-        sha256_hash = hashlib.sha256(vec_bytes).hexdigest()
+        # Include top_k in the hash so different result-set sizes are cached independently
+        key_material = vec_bytes + top_k.to_bytes(4, byteorder="big")
+        sha256_hash = hashlib.sha256(key_material).hexdigest()
         return f"t2_retrieval:{sha256_hash}"
         
     def _get_cache(self, key: str) -> Optional[List[Dict[str, Any]]]:
@@ -54,9 +61,16 @@ class Retriever:
                 if cached_data:
                     return json.loads(cached_data)
             else:
-                cached_data = self._memory_cache.get(key)
-                if cached_data:
-                    return json.loads(cached_data)
+                entry = self._memory_cache.get(key)
+                if entry is not None:
+                    json_data, expiry_ts = entry
+                    if time.monotonic() < expiry_ts:
+                        # Move to end for LRU freshness
+                        self._memory_cache.move_to_end(key)
+                        return json.loads(json_data)
+                    else:
+                        # Expired — evict
+                        del self._memory_cache[key]
         except Exception as e:
             logger.error(f"Error reading from cache: {e}")
         return None
@@ -68,8 +82,12 @@ class Retriever:
             if self._use_redis:
                 self._redis.set(key, serialized_data, ex=ttl)
             else:
-                self._memory_cache[key] = serialized_data
-                # Note: Dictionary cache doesn't inherently support TTL without custom cleanup loop
+                expiry_ts = time.monotonic() + ttl
+                self._memory_cache[key] = (serialized_data, expiry_ts)
+                self._memory_cache.move_to_end(key)
+                # Evict oldest entries if cache exceeds max size
+                while len(self._memory_cache) > self._max_memory_cache_size:
+                    self._memory_cache.popitem(last=False)
         except Exception as e:
             logger.error(f"Error writing to cache: {e}")
 
@@ -83,8 +101,8 @@ class Retriever:
         # 1. Embed user query using identical model
         query_vec = self.embedding_model.embed_query(query.strip())
         
-        # 2. Deterministic Vector Keying
-        cache_key = self._generate_cache_key(query_vec)
+        # 2. Deterministic Vector Keying (includes top_k)
+        cache_key = self._generate_cache_key(query_vec, k)
         
         # 3. Cache Execution Logic (Tier 2)
         cached_result = self._get_cache(cache_key)
