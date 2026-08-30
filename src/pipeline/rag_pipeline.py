@@ -27,13 +27,10 @@ class RAGPipeline:
         # 4. Generate answer
         answer = self.llm.generate(prompt)
         
-        # 5. Extract source metadata
+        # 5. Extract source metadata (user-facing: document name only)
         sources = [
             {
-                "source": doc.get("source"),
-                "page": doc.get("page"),
-                "chunk_id": doc.get("chunk_id"),
-                "score": doc.get("score")
+                "source": doc.get("source")
             }
             for doc in retrieved_docs
         ]

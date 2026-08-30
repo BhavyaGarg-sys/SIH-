@@ -49,7 +49,7 @@ async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict =
     citations = [
         Citation(
             standard=res.get('source', 'Unknown Document'),
-            clause=f"Page {res.get('page', '?')}"
+            clause=res.get('source', 'Unknown Document').replace('.pdf', '').replace('_', ' ')
         ) for res in results
     ]
     
