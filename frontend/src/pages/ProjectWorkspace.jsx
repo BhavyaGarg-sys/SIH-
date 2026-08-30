@@ -146,7 +146,17 @@ export default function ProjectWorkspace() {
         citations: data.citations,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      
+        if (data.ui_widget && (data.ui_widget.type === 'REPORT_LINK' || data.ui_widget.type === 'report_link') && data.ui_widget.data.report_id) {
+           navigate(`/report/${data.ui_widget.data.report_id}`);
+        }
+        
+        if (data.ui_widget && (data.ui_widget.type === 'COMPARISON_LINK' || data.ui_widget.type === 'comparison_link') && data.ui_widget.data.comparison_id) {
+           navigate(`/report/${data.ui_widget.data.comparison_id}`);
+        }
+        
+        setMessages((prev) => [...prev, assistantMessage]);
+
       
       if (isNewSession) {
          const sessionsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/project/${id}/sessions`);
@@ -479,15 +489,15 @@ export default function ProjectWorkspace() {
                     }`}>
                       <p className="whitespace-pre-wrap m-0">{msg.content}</p>
                       
-                      {msg.ui_widget && msg.ui_widget.type === 'report_link' && (
+                      {msg.ui_widget && (msg.ui_widget.type === 'report_link' || msg.ui_widget.type === 'REPORT_LINK') && (
                         <div className="mt-4">
-                          <ReportLinkWidget data={msg.ui_widget} />
+                          <ReportLinkWidget data={msg.ui_widget.data} />
                         </div>
                       )}
                       
-                      {msg.ui_widget && msg.ui_widget.type === 'comparison_link' && (
+                      {msg.ui_widget && (msg.ui_widget.type === 'comparison_link' || msg.ui_widget.type === 'COMPARISON_LINK') && (
                         <div className="mt-4">
-                          <ComparisonLinkWidget data={msg.ui_widget} />
+                          <ComparisonLinkWidget data={msg.ui_widget.data} />
                         </div>
                       )}
                     </div>
