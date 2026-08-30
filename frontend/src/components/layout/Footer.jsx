@@ -13,7 +13,7 @@ export default function Footer({ setCurrentView }) {
               <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">
                 <BookOpen className="w-4 h-4" />
               </div>
-              <span className="font-extrabold text-white text-lg tracking-tight">BIS Intelligence</span>
+              <span className="font-extrabold text-white text-lg tracking-tight">Manak AI</span>
             </div>
             <p className="text-slate-400 text-sm max-w-md leading-relaxed">
               AI-driven search, contextual synthesis, and absolute compliance resolution across the entire database of 20,000+ Indian Standards (IS, SP, and NBC codes).
@@ -74,7 +74,7 @@ export default function Footer({ setCurrentView }) {
                 </a>
               </li>
               <li>
-                <a href="#support" onClick={(e) => { e.preventDefault(); alert("BIS Intelligence Helpdesk: support@bis-intelligence.internal"); }} className="hover:text-white transition">
+                <a href="#support" onClick={(e) => { e.preventDefault(); alert("Manak AI Helpdesk: support@manak-ai.com"); }} className="hover:text-white transition">
                   Compliance Support Portal
                 </a>
               </li>
@@ -91,7 +91,7 @@ export default function Footer({ setCurrentView }) {
 
         {/* Legal Disclaimer */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© 2026 BIS Intelligence Platform. All rights reserved.</p>
+          <p>© 2026 Manak AI Platform. All rights reserved.</p>
           <p className="text-slate-400 text-center sm:text-right max-w-xl">
             Disclaimer: This platform is an independent research tool and engineering helper and is not officially affiliated with the Bureau of Indian Standards.
           </p>

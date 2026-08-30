@@ -47,7 +47,7 @@ export default function Login() {
           </div>
           
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">BIS Intelligence</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Manak AI</h2>
             <p className="text-slate-500">{isLogin ? 'Welcome back! Please enter your details.' : 'Create an account to get started.'}</p>
           </div>
 
