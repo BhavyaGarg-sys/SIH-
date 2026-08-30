@@ -16,6 +16,7 @@ import Bookmarks from './pages/Bookmarks';
 import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search, Bookmark, Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -68,11 +69,13 @@ function AppContent() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <Router>
         <AppContent />
         <Toaster position="bottom-right" />
       </Router>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }

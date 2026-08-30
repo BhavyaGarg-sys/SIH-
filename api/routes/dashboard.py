@@ -40,22 +40,6 @@ async def get_dashboard_data(user: dict = Depends(get_current_user)):
         "trend": f"{reports_count} active workspaces",
         "trendPositive": True,
         "icon": "FileSpreadsheet"
-      },
-      {
-        "id": "alerts",
-        "title": "Active Alerts",
-        "value": "0",
-        "trend": "No new updates",
-        "trendPositive": True,
-        "icon": "Bell"
-      },
-      {
-        "id": "api_calls",
-        "title": "API Calls",
-        "value": "12",
-        "trend": "Healthy",
-        "trendPositive": True,
-        "icon": "Cpu"
       }
     ]
     

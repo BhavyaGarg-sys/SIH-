@@ -13,6 +13,7 @@ from api.routes.dashboard import router as dashboard_router
 from api.routes.collaborators import router as collaborators_router
 from api.routes.reports import router as reports_router
 from api.core.database import connect_to_mongo, close_mongo_connection
+from api.core.logging_middleware import LoggingMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,9 +31,10 @@ app = FastAPI(
 )
 
 # Enable CORS for frontend integration
+app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local dev
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

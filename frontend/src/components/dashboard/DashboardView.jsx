@@ -76,9 +76,7 @@ export default function DashboardView({ setCurrentView }) {
   };
 
   const sidebarLinks = [
-    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
-    { id: 'projects', label: 'My Projects', icon: FolderLock },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard }
   ];
 
   const metricIcons = {
@@ -146,12 +144,7 @@ export default function DashboardView({ setCurrentView }) {
               })}
             </nav>
             
-            <div className="mt-6 pt-4 border-t border-slate-100">
-              <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-sm hover:bg-slate-800 transition">
-                <UploadCloud className="w-4 h-4" />
-                Upload Proprietary Standard
-              </button>
-            </div>
+
           </div>
 
           {/* Main Dashboard Canvas */}
@@ -165,11 +158,7 @@ export default function DashboardView({ setCurrentView }) {
                 </h1>
                 <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                   <span>{new Date().toLocaleDateString()}</span>
-                  <span>•</span>
-                  <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Your API endpoints are healthy (99.98% uptime)
-                  </span>
+
                 </div>
               </div>
 
