@@ -1,5 +1,5 @@
-import React from 'react';
-import { TRUSTED_ORGANIZATIONS } from '../../data/mockData';
+﻿import React from 'react';
+import { TRUSTED_ORGANIZATIONS } from '../../data/landingData';
 import { Landmark, Building2, GraduationCap, Factory, ShieldCheck, HardHat } from 'lucide-react';
 
 export default function TrustBanner() {

@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from api.routes.auth import get_current_user
 from typing import List, Optional
 
 router = APIRouter()
@@ -24,3 +25,4 @@ async def get_schemes():
         {"id": "CRS", "name": "Compulsory Registration Scheme"},
         {"id": "ISI", "name": "ISI Mark Scheme"}
     ]
+
