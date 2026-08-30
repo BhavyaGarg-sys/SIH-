@@ -13,7 +13,7 @@ client = genai.Client(api_key=api_key)
 MODEL_NAME = os.getenv("LLM_MODEL", "gemini-2.5-flash")
 
 class QueryIntent(BaseModel):
-    intent: str = Field(description="Strictly one of: 'CERTIFICATION', 'VERIFICATION', 'TECHNICAL_QUERY', 'GENERAL'")
+    intent: Literal["CERTIFICATION", "VERIFICATION", "TECHNICAL_QUERY", "EXPORT_REPORT", "COMPARE_AMENDMENTS", "GENERAL"] = Field(description="Strictly one of: 'CERTIFICATION', 'VERIFICATION', 'TECHNICAL_QUERY', 'EXPORT_REPORT', 'GENERAL'")
     product: Optional[str] = Field(description="The general product name mentioned (e.g. 'LED Bulb', 'Helmet'). Null if not mentioned.")
     is_number: Optional[str] = Field(description="The IS standard number if explicitly mentioned (e.g. 'IS 16102'). Null if not mentioned.")
 
@@ -28,7 +28,8 @@ async def extract_intent(user_message: str) -> QueryIntent:
         "1. CERTIFICATION: The user wants to know how to certify, manufacture, or launch a product.\n"
         "2. VERIFICATION: The user wants to verify a hallmark, ISI mark, or consumer purchase.\n"
         "3. TECHNICAL_QUERY: The user is asking a specific technical question about a standard's rules, dimensions, or testing criteria.\n"
-        "4. GENERAL: Greeting or unrelated queries."
+        "4. EXPORT_REPORT: The user wants to export, download, or summarize the conversation as a report.\n"
+        "6. GENERAL: Greeting or unrelated queries."
     )
 
     response = client.models.generate_content(
