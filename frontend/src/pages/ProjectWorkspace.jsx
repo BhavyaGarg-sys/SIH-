@@ -478,6 +478,18 @@ export default function ProjectWorkspace() {
                         : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
                     }`}>
                       <p className="whitespace-pre-wrap m-0">{msg.content}</p>
+                      
+                      {msg.ui_widget && msg.ui_widget.type === 'report_link' && (
+                        <div className="mt-4">
+                          <ReportLinkWidget data={msg.ui_widget} />
+                        </div>
+                      )}
+                      
+                      {msg.ui_widget && msg.ui_widget.type === 'comparison_link' && (
+                        <div className="mt-4">
+                          <ComparisonLinkWidget data={msg.ui_widget} />
+                        </div>
+                      )}
                     </div>
                     
                     {msg.citations && msg.citations.length > 0 && (
