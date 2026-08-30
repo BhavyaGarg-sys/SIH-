@@ -8,26 +8,39 @@ from api.schemas.chat import Citation
 # This ensures they only load into memory once when the app starts
 _retriever = Retriever()
 
+import numpy as np
+from api.core.cache import cache_manager
+
 _llm = LLMWrapper()
 
-# Simple in-memory cache for LLM responses
-_llm_cache = {}
+def cosine_similarity(v1, v2):
+    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict = None) -> Tuple[str, List[Citation]]:
-    # Build cache key based on query and user profile
-    profile_key = str(sorted(user_profile.items())) if user_profile else ""
-    cache_key = f"{query}_{top_k}_{profile_key}"
-    
-    if cache_key in _llm_cache:
-        print(f"[LLM CACHE HIT] Returning cached response for: {query[:30]}...")
-        return _llm_cache[cache_key]
-        
-    print(f"[LLM CACHE MISS] Generating new response for: {query[:30]}...")
+    # Profile context string
+    profile_str = ""
+    if user_profile and user_profile.get('profile_complete'):
+        profile_str = f"[User context: {user_profile.get('industry_sector', 'User')} in {user_profile.get('state', 'India')}, Company: {user_profile.get('company_name', 'Unknown')}]\n"
+        query = profile_str + query
 
-    """
-    Internal service function to orchestrate the RAG pipeline.
-    Retrieves context from FAISS and generates an answer using the LLM.
-    """
+    # 1. Semantic Caching
+    # We fetch the list of recent queries to check for semantic similarity
+    cached_queries = await cache_manager.get("recent_llm_queries") or []
+    
+    query_emb = _retriever.embedding_model.get_embeddings([query])[0]
+    
+    # Check for hit > 0.95 similarity
+    for item in cached_queries:
+        if cosine_similarity(query_emb, np.array(item['embedding'])) > 0.95:
+            print(f"[SEMANTIC CACHE HIT] Matching query: {item['query'][:30]}...")
+            cached_res = await cache_manager.get(f"llm_res_{item['hash']}")
+            if cached_res:
+                # Reconstruct Citations
+                cits = [Citation(**c) for c in cached_res['citations']]
+                return cached_res['text'], cits
+                
+    print(f"[SEMANTIC CACHE MISS] Generating new response...")
+
     # 1. Fetch relevant context from Vector DB
     results = _retriever.retrieve(query, top_k=top_k)
     
@@ -45,11 +58,29 @@ async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict =
         profile_str = f"[User context: {user_profile.get('industry_sector', 'User')} in {user_profile.get('state', 'India')}, Company: {user_profile.get('company_name', 'Unknown')}]\n"
         query = profile_str + query
     
-    # 3. Format prompt and generate AI text
+# 3. Format prompt and generate AI text
     prompt = format_rag_prompt(query=query, context_chunks=context_texts)
     ai_text = _llm.generate(prompt)
     
-    # Store in cache
-    _llm_cache[cache_key] = (ai_text, citations)
+    # Save to semantic cache
+    import hashlib
+    query_hash = hashlib.sha256(query.encode()).hexdigest()
+    
+    # Store response
+    await cache_manager.set(f"llm_res_{query_hash}", {
+        "text": ai_text,
+        "citations": [c.dict() for c in citations]
+    }, ttl=86400) # 24h
+    
+    # Update query list (keep last 100)
+    cached_queries.append({
+        "query": query,
+        "embedding": query_emb.tolist(),
+        "hash": query_hash
+    })
+    if len(cached_queries) > 100:
+        cached_queries.pop(0)
+    await cache_manager.set("recent_llm_queries", cached_queries, ttl=86400)
     
     return ai_text, citations
+

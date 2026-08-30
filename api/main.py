@@ -15,6 +15,7 @@ from api.routes.collaborators import router as collaborators_router
 from api.routes.reports import router as reports_router
 from api.routes.documents import router as documents_router
 from api.core.database import connect_to_mongo, close_mongo_connection
+from api.core.cache import cache_manager
 from api.core.logging_middleware import LoggingMiddleware
 
 
