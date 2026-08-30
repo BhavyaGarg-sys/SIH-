@@ -11,6 +11,8 @@ Given the context information above, answer the user's question accurately and c
 If the context does not contain enough information to answer the question, state that clearly.
 Always cite relevant BIS clause numbers or standard codes if present in the context.
 
+CRITICAL INSTRUCTION: DO NOT use any Markdown formatting whatsoever. No bold text (**), no asterisks for lists (*), no hashtags (#), and no backticks (`). Write strictly in plain text paragraphs.
+
 Question: {query}
 
 Answer:"""

@@ -65,7 +65,7 @@ async def generate_project(request: ProjectGenerateRequest, user: dict = Depends
     db = get_database()
     
     # 1. Ask the AI to figure out the standard and checklist
-    prompt = f"I am a {request.role} looking to manufacture and certify {request.product} in India. What is the IS Standard? Please provide a 4-step certification checklist. Keep it short."
+    prompt = f"I am a {request.role} looking to manufacture and certify {request.product} in India. What is the IS Standard? Please provide a 4-step certification checklist. Keep it short. CRITICAL: Do not use any Markdown formatting whatsoever (no bolding, no asterisks, no bullet points). Output plain text only."
     
     # We use our internal RAG service (this saves us from duplicating logic)
     ai_text, citations = await generate_rag_response(prompt)
