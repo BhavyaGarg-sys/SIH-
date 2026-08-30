@@ -5,7 +5,6 @@ import { Send, Loader2, FileText, ChevronDown, ChevronUp, Bot, User, Plus, Messa
 import { useAuth } from '../context/AuthContext';
 import AppHeader from '../components/AppHeader';
 import { toast } from 'sonner';
-import { openProtectedPdf } from '../utils/openProtectedPdf';
 
 const generateId = () => {
   return window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'sess_' + Math.random().toString(36).substr(2, 9);
@@ -407,7 +406,10 @@ function SourcesDropdown({ sources }) {
             <div key={idx} className="bg-slate-50 border border-slate-200 border-l-2 border-l-blue-500 rounded-lg p-3 hover:shadow-sm transition-shadow">
               <div className="mb-1 flex justify-between items-start">
                 <button 
-                  onClick={() => openProtectedPdf(src.standard || src.source).catch(() => toast.error('Failed to open source document.'))}
+                  onClick={() => {
+                    const filename = (src.standard || src.source || "").split('/').pop().split('\\').pop();
+                    window.open(`http://localhost:8000/pdfs/${filename}`, '_blank');
+                  }}
                   className="text-left font-semibold text-blue-700 hover:text-blue-800 hover:underline flex items-start gap-1.5 text-sm"
                 >
                   <FileText size={14} className="mt-0.5 flex-shrink-0" />

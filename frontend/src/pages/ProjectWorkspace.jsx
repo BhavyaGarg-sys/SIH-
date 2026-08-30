@@ -5,7 +5,6 @@ import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2, Plus,
 import { useAuth } from '../context/AuthContext';
 import AppHeader from '../components/AppHeader';
 import { toast } from 'sonner';
-import { fetchProtectedPdfUrl } from '../utils/openProtectedPdf';
 
 const generateId = () => 'sess_' + Math.random().toString(36).substr(2, 9);
 
@@ -168,18 +167,6 @@ export default function ProjectWorkspace() {
       toast.success("PDF Exported Successfully!");
     } catch (err) {
       toast.error("Failed to export PDF");
-    }
-  };
-
-  const handleOpenCitation = async (source) => {
-    try {
-      const url = await fetchProtectedPdfUrl(source);
-      setPdfViewerUrl(previousUrl => {
-        if (previousUrl) URL.revokeObjectURL(previousUrl);
-        return url;
-      });
-    } catch (err) {
-      toast.error('Failed to open source document.');
     }
   };
 
@@ -489,7 +476,10 @@ export default function ProjectWorkspace() {
                         {msg.citations.map((cit, idx) => (
                           <div key={idx} className="flex items-center bg-blue-50 border border-blue-200 rounded-full overflow-hidden shadow-sm group">
                             <button 
-                              onClick={() => handleOpenCitation(cit.standard)}
+                              onClick={() => {
+                                const filename = cit.standard.split('/').pop().split('\\').pop();
+                                setPdfViewerUrl(`http://localhost:8000/pdfs/${filename}`);
+                              }}
                               className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors"
                               title={`Open ${cit.standard}`}
                             >
@@ -584,10 +574,7 @@ export default function ProjectWorkspace() {
               <h3 className="m-0 text-white font-bold text-lg">Document Viewer</h3>
             </div>
             <button 
-              onClick={() => {
-                URL.revokeObjectURL(pdfViewerUrl);
-                setPdfViewerUrl(null);
-              }}
+              onClick={() => setPdfViewerUrl(null)}
               className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
             >
               Close ✕
