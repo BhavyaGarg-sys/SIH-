@@ -18,7 +18,8 @@ class RAGPipeline:
         retrieved_docs = self.retriever.retrieve(query, top_k=top_k or config.TOP_K)
         
         # 2. Extract context text content
-        context_chunks = [doc.get("content", "") for doc in retrieved_docs]
+        # Retriever returns the chunk body in `text` and the one-based page in `page`.
+        context_chunks = [doc.get("text", "") for doc in retrieved_docs]
         
         # 3. Format prompt
         prompt = format_rag_prompt(query, context_chunks)
@@ -30,7 +31,7 @@ class RAGPipeline:
         sources = [
             {
                 "source": doc.get("source"),
-                "page": doc.get("page_number"),
+                "page": doc.get("page"),
                 "chunk_id": doc.get("chunk_id"),
                 "score": doc.get("score")
             }
