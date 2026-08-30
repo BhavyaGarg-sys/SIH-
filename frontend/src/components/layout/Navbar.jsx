@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   BookOpen, 
   Search, 
@@ -136,7 +136,7 @@ export default function Navbar({ currentView, setCurrentView, onSearchSelect }) 
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-2 shadow-lg animate-in slide-in-from-top-2">
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-2 shadow-xl animate-in slide-in-from-top-2 z-50">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;

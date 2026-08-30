@@ -9,6 +9,8 @@ import DashboardView from './components/dashboard/DashboardView';
 
 import Login from './pages/Login';
 import ProjectWorkspace from './pages/ProjectWorkspace';
+import ReportTemplate from './pages/ReportTemplate';
+import AmendmentComparison from './pages/AmendmentComparison';
 import Bookmarks from './pages/Bookmarks';
 
 import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search, Bookmark, Loader2 } from 'lucide-react';
@@ -51,8 +53,10 @@ function AppContent() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardView setCurrentView={setCurrentView} /></ProtectedRoute>} />
 
 
-          <Route path="/workspace/:id" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
+                    <Route path="/workspace/:id" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
           <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
+          <Route path="/report/:id" element={<ProtectedRoute><ReportTemplate /></ProtectedRoute>} />
+          <Route path="/comparison/:id" element={<ProtectedRoute><AmendmentComparison /></ProtectedRoute>} />
         </Routes>
       </main>
 

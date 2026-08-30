@@ -10,6 +10,8 @@ from api.routes.projects import router as projects_router
 from api.routes.data import router as data_router
 from api.routes.bookmarks import router as bookmarks_router
 from api.routes.dashboard import router as dashboard_router
+from api.routes.collaborators import router as collaborators_router
+from api.routes.reports import router as reports_router
 from api.core.database import connect_to_mongo, close_mongo_connection
 
 @asynccontextmanager
@@ -46,6 +48,8 @@ app.include_router(projects_router, prefix="/api/v1/projects", tags=["Projects"]
 app.include_router(data_router, prefix="/api/v1/data", tags=["Domain Data"])
 app.include_router(bookmarks_router, prefix="/api/v1/bookmarks", tags=["Bookmarks"])
 app.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["Dashboard"])
+app.include_router(collaborators_router, prefix="/api/v1/projects", tags=["Collaborators"])
+app.include_router(reports_router, prefix="/api/v1/reports", tags=["Reports"])
 
 # Mount static files for PDFs
 docs_path = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
