@@ -1,9 +1,9 @@
-import React from 'react';
+﻿import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import LandingPage from './components/landing/LandingPage';
-import ComparisonView from './components/comparison/ComparisonView';
+
 import DashboardView from './components/dashboard/DashboardView';
 
 
@@ -47,7 +47,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<LandingPage setCurrentView={setCurrentView} />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/comparison" element={<ProtectedRoute><ComparisonView setCurrentView={setCurrentView} /></ProtectedRoute>} />
+
           <Route path="/dashboard" element={<ProtectedRoute><DashboardView setCurrentView={setCurrentView} /></ProtectedRoute>} />
 
 

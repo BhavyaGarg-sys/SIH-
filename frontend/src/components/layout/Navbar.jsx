@@ -25,7 +25,7 @@ export default function Navbar({ currentView, setCurrentView, onSearchSelect }) 
 
   const navItems = [
     { id: 'landing', label: 'Standards', icon: Search },
-    { id: 'comparison', label: 'Research & Compare', icon: Layers, badge: 'AI' },
+
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
 
   ];
@@ -166,12 +166,7 @@ export default function Navbar({ currentView, setCurrentView, onSearchSelect }) 
             >
               Dr. Sharma (Dashboard)
             </button>
-            <button
-              onClick={() => handleNavClick('comparison')}
-              className="flex-1 text-center py-2.5 text-xs font-bold text-white bg-brand-600 rounded-lg shadow-sm shadow-brand-500/30"
-            >
-              Launch AI Compare
-            </button>
+            
           </div>
         </div>
       )}
