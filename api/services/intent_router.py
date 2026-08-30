@@ -1,6 +1,6 @@
 import os
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 from dotenv import load_dotenv
 from google import genai
 
