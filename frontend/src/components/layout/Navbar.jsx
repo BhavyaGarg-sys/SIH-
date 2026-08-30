@@ -51,7 +51,7 @@ export default function Navbar({ currentView, setCurrentView, onSearchSelect }) 
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-slate-900 tracking-tight text-lg">BIS Intelligence</span>
+                <span className="font-extrabold text-slate-900 tracking-tight text-lg">Manak AI</span>
                 <span className="bg-brand-50 text-brand-700 border border-brand-200 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
                   v2.4 AI
                 </span>
