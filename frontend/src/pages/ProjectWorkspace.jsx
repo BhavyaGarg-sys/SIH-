@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReportLinkWidget from '../components/chat/widgets/ReportLinkWidget';
 import ComparisonLinkWidget from '../components/chat/widgets/ComparisonLinkWidget';
@@ -506,7 +506,6 @@ export default function ProjectWorkspace() {
                             >
                               <FileText size={12} className="group-hover:scale-110 transition-transform" />
                               <span className="truncate max-w-[150px]">{cit.standard}</span>
-                              <span className="text-brand-400">({cit.clause})</span>
                             </button>
                             <button
                               onClick={async (e) => {

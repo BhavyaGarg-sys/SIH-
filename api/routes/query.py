@@ -25,10 +25,7 @@ async def handle_query(request: QueryRequest) -> QueryResponse:
         context_texts.append(res['text'])
         sources.append(
             SourceDocument(
-                source=res.get('source', 'Unknown'),
-                page=res.get('page', 0),
-                chunk_id=res.get('chunk_id', 'unknown_chunk'),
-                score=res.get('score', 0.0)
+                source=res.get('source', 'Unknown')
             )
         )
         
