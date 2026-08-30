@@ -1,0 +1,23 @@
+[METADATA: STANDARD_ID = IS 3043]
+
+ETag: "ca8ffd9b50213ffe3b3a470a79faebe1"
+accept: */*
+authorization: LOW u9jVQF7lXRkbXU49:REDACTED_BY_IA_S3
+connection: close
+content-length: 8253914
+expect: 100-continue
+host: s3.us.archive.org
+user-agent: curl/7.21.3 (amd64-portbld-freebsd8.1) libcurl/7.21.3 OpenSSL/0.9.8n zlib/1.2.3
+x-amz-auto-make-bucket: 1
+x-archive-meta-creator: Bureau of Indian Standards (BIS)
+x-archive-meta-credits: Uploaded by Public.Resource.Org
+x-archive-meta-date: 1987
+x-archive-meta-description: In order to promote public education and public safety, equal justice for all, a better informed citizenry, the rule of law, world trade and world peace, this legal document is hereby made available on a noncommercial basis, as it is the right of all humans to know and speak the laws that govern them. (For more information: <a href=https://law.resource.org/pub/12tables.html>12 Tables of Code</a>)<br /><br /><b>Name of Legally Binding Document: </IS 3043: Code of Practice for Earthing (First Revision) <br /><b>Name of Standards Organization: </b>Bureau of Indian Standards (BIS)<br /><br /><b>LEGALLY BINDING DOCUMENT</b><br /><br />
+x-archive-meta-language: English
+x-archive-meta-licenseurl: http://creativecommons.org/publicdomain/zero/1.0/
+x-archive-meta-mediatype: texts
+x-archive-meta-subject: law.resource.org;public.resource.org
+x-archive-meta-title: IS 3043: Code of Practice for Earthing (First Revision)
+x-archive-meta01-collection: publicsafetycode
+x-archive-meta02-collection: USGovernmentDocuments
+x-upload-date: 2013-01-08T18:32:40.000Z
