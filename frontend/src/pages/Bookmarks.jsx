@@ -17,7 +17,7 @@ export default function Bookmarks() {
   const fetchBookmarks = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:8000/api/v1/bookmarks');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/bookmarks`);
       setBookmarks(res.data);
     } catch (err) {
       console.error(err);
@@ -29,7 +29,7 @@ export default function Bookmarks() {
 
   const handleUpdateNote = async (id) => {
     try {
-      await axios.patch(`http://localhost:8000/api/v1/bookmarks/${id}`, { note: editNoteText });
+      await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/bookmarks/${id}`, { note: editNoteText });
       setBookmarks(prev => prev.map(b => b.id === id ? { ...b, note: editNoteText } : b));
       setEditingNoteId(null);
       toast.success('Note updated');
@@ -41,7 +41,7 @@ export default function Bookmarks() {
   const handleDelete = async (id) => {
     if (!window.confirm("Remove this bookmark?")) return;
     try {
-      await axios.delete(`http://localhost:8000/api/v1/bookmarks/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/bookmarks/${id}`);
       setBookmarks(prev => prev.filter(b => b.id !== id));
       toast.success('Bookmark removed');
     } catch (err) {
@@ -80,7 +80,7 @@ export default function Bookmarks() {
                     onClick={() => {
                       if(bookmark.pdf_path) {
                         const filename = bookmark.pdf_path.split('/').pop().split('\\').pop();
-                        window.open(`http://localhost:8000/pdfs/${filename}`, '_blank');
+                        window.open(`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : 'http://localhost:8000'}/pdfs/${filename}`, '_blank');
                       }
                     }}
                   >

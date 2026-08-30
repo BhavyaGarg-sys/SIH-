@@ -19,7 +19,7 @@ export default function ShareModal({ isOpen, onClose, projectId, currentUserId }
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:8000/api/v1/projects/${projectId}/collaborators`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${projectId}/collaborators`);
       setMembers(res.data);
     } catch (err) {
       toast.error('Failed to load collaborators');
@@ -34,7 +34,7 @@ export default function ShareModal({ isOpen, onClose, projectId, currentUserId }
     
     try {
       setInviting(true);
-      const res = await axios.post(`http://localhost:8000/api/v1/projects/${projectId}/collaborators`, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${projectId}/collaborators`, {
         email: inviteEmail,
         role: inviteRole
       });
@@ -50,7 +50,7 @@ export default function ShareModal({ isOpen, onClose, projectId, currentUserId }
 
   const handleRemove = async (targetId) => {
     try {
-      await axios.delete(`http://localhost:8000/api/v1/projects/${projectId}/collaborators/${targetId}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${projectId}/collaborators/${targetId}`);
       setMembers(members.filter(m => m.user_id !== targetId));
       toast.success('Collaborator removed');
     } catch (err) {
@@ -60,7 +60,7 @@ export default function ShareModal({ isOpen, onClose, projectId, currentUserId }
 
   const handleChangeRole = async (targetId, newRole) => {
     try {
-      await axios.patch(`http://localhost:8000/api/v1/projects/${projectId}/collaborators/${targetId}`, {
+      await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${projectId}/collaborators/${targetId}`, {
         role: newRole
       });
       setMembers(members.map(m => m.user_id === targetId ? { ...m, role: newRole } : m));
@@ -78,7 +78,7 @@ export default function ShareModal({ isOpen, onClose, projectId, currentUserId }
   const isOwner = currentUserMember.role === 'OWNER' || members.length === 0;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
         
         {/* Header */}

@@ -9,6 +9,8 @@ import DashboardView from './components/dashboard/DashboardView';
 
 import Login from './pages/Login';
 import ProjectWorkspace from './pages/ProjectWorkspace';
+import ReportTemplate from './pages/ReportTemplate';
+import AmendmentComparison from './pages/AmendmentComparison';
 import Bookmarks from './pages/Bookmarks';
 
 import { Layers, Sparkles, LayoutDashboard, FileText, Palette, Search, Bookmark, Loader2 } from 'lucide-react';

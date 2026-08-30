@@ -1,5 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReportLinkWidget from '../components/chat/widgets/ReportLinkWidget';
+import ComparisonLinkWidget from '../components/chat/widgets/ComparisonLinkWidget';
 import axios from 'axios';
 import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2, Plus, MessageSquare, ChevronRight, Printer, Bookmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -43,10 +45,10 @@ export default function ProjectWorkspace() {
     
     const fetchWorkspaceData = async () => {
       try {
-        const projRes = await axios.get(`http://localhost:8000/api/v1/projects/${id}`);
+        const projRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}`);
         setProject(projRes.data);
         
-        const sessionsRes = await axios.get(`http://localhost:8000/api/v1/chat/project/${id}/sessions`);
+        const sessionsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/project/${id}/sessions`);
         setSessions(sessionsRes.data);
         if(sessionsRes.data.length > 0) {
           setActiveSessionId(sessionsRes.data[0].session_id);
@@ -63,7 +65,7 @@ export default function ProjectWorkspace() {
     if (!activeSessionId) return;
     const fetchHistory = async () => {
       try {
-        const chatRes = await axios.get(`http://localhost:8000/api/v1/chat/history/${activeSessionId}`);
+        const chatRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/history/${activeSessionId}`);
         setMessages(chatRes.data);
       } catch (err) {
         console.error("Failed to fetch chat history");
@@ -80,7 +82,7 @@ export default function ProjectWorkspace() {
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this entire workspace? This cannot be undone.")) return;
     try {
-      await axios.delete(`http://localhost:8000/api/v1/projects/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}`);
       toast.success("Project deleted successfully");
       navigate('/dashboard');
     } catch (err) {
@@ -91,7 +93,7 @@ export default function ProjectWorkspace() {
   const toggleStep = async (stepId, currentStatus) => {
     const newStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
     try {
-      const res = await axios.patch(`http://localhost:8000/api/v1/projects/${id}/checklist/${stepId}`, {
+      const res = await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}/checklist/${stepId}`, {
         status: newStatus
       });
       
@@ -107,7 +109,7 @@ export default function ProjectWorkspace() {
   const handleStatusChange = async (e) => {
     const newStatus = e.target.value;
     try {
-      await axios.patch(`http://localhost:8000/api/v1/projects/${id}`, { status: newStatus });
+      await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}`, { status: newStatus });
       setProject(prev => ({ ...prev, status: newStatus }));
       toast.success("Status updated");
     } catch (err) {
@@ -129,7 +131,7 @@ export default function ProjectWorkspace() {
     const isNewSession = messages.length === 0;
 
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/chat/message', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/message`, {
         message: userMessage.content,
         interaction_mode: "guided_ui",
         session_id: activeSessionId,
@@ -147,7 +149,7 @@ export default function ProjectWorkspace() {
       setMessages((prev) => [...prev, assistantMessage]);
       
       if (isNewSession) {
-         const sessionsRes = await axios.get(`http://localhost:8000/api/v1/chat/project/${id}/sessions`);
+         const sessionsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/project/${id}/sessions`);
          setSessions(sessionsRes.data);
       }
     } catch (error) {
@@ -161,7 +163,7 @@ export default function ProjectWorkspace() {
 
   const handleExportPdf = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/v1/projects/${id}/export`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}/export`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -193,7 +195,7 @@ export default function ProjectWorkspace() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* Left Pane: Compliance Checklist */}
-        <div className="w-96 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-10 shadow-sm">
+        <div className="hidden lg:flex w-96 bg-white border-r border-slate-200 flex-col flex-shrink-0 z-10 shadow-sm">
           <div className="p-6 border-b border-slate-100">
             <div className="flex justify-between items-start mb-4">
               <div>
@@ -307,7 +309,7 @@ export default function ProjectWorkspace() {
                       onChange={async (e) => {
                         const newDate = e.target.value;
                         try {
-                          await axios.patch(`http://localhost:8000/api/v1/projects/${id}/checklist/${step.id}`, { due_date: newDate });
+                          await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}/checklist/${step.id}`, { due_date: newDate });
                           setProject(prev => ({ ...prev, steps: prev.steps.map(s => s.id === step.id ? { ...s, due_date: newDate } : s) }));
                         } catch (err) {
                           toast.error("Failed to update date");
@@ -325,7 +327,7 @@ export default function ProjectWorkspace() {
                       e.stopPropagation();
                       if(!window.confirm("Delete this task?")) return;
                       try {
-                        const res = await axios.delete(`http://localhost:8000/api/v1/projects/${id}/checklist/${step.id}`);
+                        const res = await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}/checklist/${step.id}`);
                         setProject(prev => ({
                           ...prev,
                           steps: prev.steps.filter(s => s.id !== step.id),
@@ -349,7 +351,7 @@ export default function ProjectWorkspace() {
               const title = e.target.newTask.value;
               if(!title.trim()) return;
               try {
-                const res = await axios.post(`http://localhost:8000/api/v1/projects/${id}/checklist`, { title });
+                const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/${id}/checklist`, { title });
                 setProject(prev => ({
                   ...prev,
                   steps: [...prev.steps, res.data.step],
@@ -372,7 +374,7 @@ export default function ProjectWorkspace() {
         </div>
 
         {/* Middle Pane: Chat Threads */}
-        <div className="w-64 bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 z-0">
+        <div className="hidden md:flex w-64 bg-slate-50 border-r border-slate-200 flex-col flex-shrink-0 z-0">
           <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
             <span className="font-bold text-slate-800 text-sm">Chat Threads</span>
             <button 
@@ -405,8 +407,8 @@ export default function ProjectWorkspace() {
                     e.stopPropagation();
                     if(!window.confirm("Delete this thread?")) return;
                     try {
-                      await axios.delete(`http://localhost:8000/api/v1/chat/session/${sess.session_id}`);
-                      const sessionsRes = await axios.get(`http://localhost:8000/api/v1/chat/project/${id}/sessions`);
+                      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/session/${sess.session_id}`);
+                      const sessionsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/project/${id}/sessions`);
                       setSessions(sessionsRes.data);
                       if (activeSessionId === sess.session_id) {
                          if(sessionsRes.data.length > 0) {
@@ -437,7 +439,7 @@ export default function ProjectWorkspace() {
         </div>
 
         {/* Right Pane: Dedicated AI Chat */}
-        <main className="flex-1 flex flex-col relative bg-white min-w-[400px]">
+        <main className="flex-1 flex flex-col relative bg-white min-w-0 md:min-w-[400px]">
           <div className="px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center gap-3 shadow-sm z-10 sticky top-0">
             <div className="p-2 bg-gradient-to-br from-brand-500 to-indigo-600 rounded-lg text-white shadow-sm">
               <Bot size={20} />
@@ -485,7 +487,7 @@ export default function ProjectWorkspace() {
                             <button 
                               onClick={() => {
                                 const filename = cit.standard.split('/').pop().split('\\').pop();
-                                setPdfViewerUrl(`http://localhost:8000/pdfs/${filename}`);
+                                setPdfViewerUrl(`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : 'http://localhost:8000'}/pdfs/${filename}`);
                               }}
                               className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-brand-100 text-brand-700 text-xs font-semibold transition-colors"
                               title={`Open ${cit.standard}`}
@@ -498,7 +500,7 @@ export default function ProjectWorkspace() {
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 try {
-                                  await axios.post('http://localhost:8000/api/v1/bookmarks', {
+                                  await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/bookmarks`, {
                                     standard_ref: cit.standard,
                                     clause_text: cit.clause || cit.snippet || "Relevant section",
                                     pdf_path: cit.standard,

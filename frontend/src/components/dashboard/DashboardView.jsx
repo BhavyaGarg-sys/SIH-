@@ -39,7 +39,7 @@ export default function DashboardView({ setCurrentView }) {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/v1/dashboard/');
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/dashboard/`);
         setDashboardData(response.data);
       } catch (err) {
         console.error('Failed to load dashboard data', err);
@@ -62,7 +62,7 @@ export default function DashboardView({ setCurrentView }) {
     
     setIsGenerating(true);
     try {
-      const res = await axios.post('http://localhost:8000/api/v1/projects/generate', { product, role });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/projects/generate`, { product, role });
       if(res.data.project_id) {
          setIsGenerating(false);
          navigate(`/workspace/${res.data.project_id}`);
@@ -192,7 +192,7 @@ export default function DashboardView({ setCurrentView }) {
 
             {/* Modal Overlay */}
             {showModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
                 <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                   <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div>
