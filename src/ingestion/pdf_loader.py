@@ -62,6 +62,28 @@ class PDFLoader:
 
         return pages
 
+
+    def load_single_txt(self, txt_path: Path) -> List[Dict[str, Any]]:
+        if not txt_path.exists():
+            logger.error(f"TXT file does not exist: {txt_path}")
+            return []
+            
+        doc_id = self.generate_document_id(txt_path)
+        try:
+            with open(txt_path, 'r', encoding='utf-8', errors='ignore') as f:
+                text = f.read()
+            
+            logger.info(f"Successfully extracted text from '{txt_path.name}' (doc_id: {doc_id}).")
+            return [{
+                "document_id": doc_id,
+                "source": txt_path.name,
+                "page": 1,
+                "text": text
+            }]
+        except Exception as e:
+            logger.error(f"Error reading TXT file '{txt_path.name}': {e}")
+            return []
+
     def load_all_pdfs(self) -> Dict[str, Any]:
         """Automatically discover and load all PDFs inside raw_dir.
         
@@ -73,20 +95,25 @@ class PDFLoader:
             self.raw_dir.mkdir(parents=True, exist_ok=True)
             return {"all_pages": [], "documents_processed": 0, "failed_files": []}
 
-        pdf_files = sorted(list(self.raw_dir.glob("*.pdf")))
-        logger.info(f"Found {len(pdf_files)} PDF documents in '{self.raw_dir}'.")
+        pdf_files = sorted(list(self.raw_dir.rglob("*.pdf"))) + sorted(list(self.raw_dir.rglob("*.txt")))
+        logger.info(f"Found {len(pdf_files)} documents (PDF/TXT) in '{self.raw_dir}'.")
 
         all_pages = []
         failed_files = []
         documents_processed = 0
 
-        for pdf_path in pdf_files:
-            pages = self.load_single_pdf(pdf_path)
+        for doc_path in pdf_files:
+            if doc_path.suffix.lower() == '.pdf':
+                pages = self.load_single_pdf(doc_path)
+            elif doc_path.suffix.lower() == '.txt':
+                pages = self.load_single_txt(doc_path)
+            else:
+                continue
             if pages:
                 all_pages.extend(pages)
                 documents_processed += 1
             else:
-                failed_files.append(pdf_path.name)
+                failed_files.append(doc_path.name)
 
         return {
             "all_pages": all_pages,

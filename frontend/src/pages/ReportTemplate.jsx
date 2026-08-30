@@ -89,6 +89,22 @@ export default function ReportTemplate() {
           </p>
         </section>
 
+        {/* Key Findings */}
+        <section className="mb-12">
+          <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-2 mb-6">
+            Key Regulatory Findings
+          </h3>
+          <ul className="list-disc pl-6 space-y-3 text-slate-700 text-lg">
+            {data.key_findings && data.key_findings.length > 0 ? (
+              data.key_findings.map((item, idx) => (
+                <li key={idx} className="leading-relaxed">{item}</li>
+              ))
+            ) : (
+              <p className="text-slate-500 italic ml-[-24px]">No specific findings generated.</p>
+            )}
+          </ul>
+        </section>
+
         {/* Action Items */}
         <section className="mb-12">
           <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-2 mb-6">
@@ -109,6 +125,36 @@ export default function ReportTemplate() {
             )}
           </div>
         </section>
+
+        {/* Required Documents */}
+        <section className="mb-12">
+          <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-2 mb-6">
+            Required Documents
+          </h3>
+          <ul className="list-disc pl-6 space-y-3 text-slate-700 text-lg">
+            {data.required_documents && data.required_documents.length > 0 ? (
+              data.required_documents.map((item, idx) => (
+                <li key={idx} className="leading-relaxed">{item}</li>
+              ))
+            ) : (
+              <p className="text-slate-500 italic ml-[-24px]">No specific documents were identified.</p>
+            )}
+          </ul>
+        </section>
+
+        {/* Risk Factors */}
+        {data.risk_factors && data.risk_factors.length > 0 && (
+          <section className="mb-12 p-6 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+            <h3 className="text-lg font-bold text-red-900 uppercase tracking-wide mb-4">
+              Compliance Risks & Warnings
+            </h3>
+            <ul className="list-disc pl-6 space-y-2 text-red-800 text-md">
+              {data.risk_factors.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Standards Cited */}
         <section className="mb-16 print:break-inside-avoid">

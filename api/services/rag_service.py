@@ -27,7 +27,7 @@ async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict =
     # We fetch the list of recent queries to check for semantic similarity
     cached_queries = await cache_manager.get("recent_llm_queries") or []
     
-    query_emb = _retriever.embedding_model.get_embeddings([query])[0]
+    query_emb = _retriever.embedding_model.embed_query(query)
     
     # Check for hit > 0.95 similarity
     for item in cached_queries:
