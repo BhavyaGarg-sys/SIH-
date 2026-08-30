@@ -4,8 +4,8 @@ from google import genai
 from pydantic import BaseModel, Field
 from typing import List
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=GEMINI_API_KEY)
+LLM_API_KEY = os.getenv("LLM_API_KEY")
+client = genai.Client(api_key=LLM_API_KEY)
 MODEL_NAME = os.getenv("LLM_MODEL", "gemini-2.5-flash")
 
 class ComparisonItem(BaseModel):

@@ -4,7 +4,8 @@ from typing import List
 from api.schemas.chat import ChatMessageRequest, ChatMessageResponse, UIWidget, Citation
 from api.services.intent_router import extract_intent
 from api.services.rag_service import generate_rag_response
-from api.services.report_generator import generate_chat_report\nfrom api.services.amendment_service import generate_amendment_comparison
+from api.services.report_generator import generate_chat_report
+from api.services.amendment_service import generate_amendment_comparison
 from api.core.database import get_database
 from api.core.deps import get_current_user
 from api.routes.projects import get_project_with_role
