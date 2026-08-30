@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Bookmark as BookmarkIcon, FileText, Trash2, Edit3, Loader2 } from 'lucide-react';
 import AppHeader from '../components/AppHeader';
 import { toast } from 'sonner';
+import { openProtectedPdf } from '../utils/openProtectedPdf';
 
 export default function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
@@ -78,9 +79,8 @@ export default function Bookmarks() {
                   <div 
                     className="cursor-pointer group"
                     onClick={() => {
-                      if(bookmark.pdf_path) {
-                        const filename = bookmark.pdf_path.split('/').pop().split('\\').pop();
-                        window.open(`http://localhost:8000/pdfs/${filename}`, '_blank');
+                      if (bookmark.pdf_path) {
+                        openProtectedPdf(bookmark.pdf_path).catch(() => toast.error('Failed to open source document.'));
                       }
                     }}
                   >

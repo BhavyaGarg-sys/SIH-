@@ -3,8 +3,23 @@ import bcrypt
 from datetime import datetime, timedelta
 from jose import jwt
 
-# Should be in .env
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+def _load_secret_key() -> str:
+    """Load a production-safe JWT signing key without a silent default."""
+    value = os.getenv("SECRET_KEY", "").strip()
+    placeholders = {
+        "your-secret-key-here",
+        "generate-a-secure-random-string-here",
+        "replace-with-a-random-secret-at-least-32-characters-long",
+    }
+    if not value or value.lower() in placeholders or len(value) < 32:
+        raise RuntimeError(
+            "SECRET_KEY must be configured with a unique value of at least 32 characters. "
+            "See .env.example for a secure generation command."
+        )
+    return value
+
+
+SECRET_KEY = _load_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 

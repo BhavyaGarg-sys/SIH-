@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 load_dotenv()
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -9,7 +10,20 @@ from api.routes.chat import router as chat_router
 from api.routes.projects import router as projects_router
 from api.routes.data import router as data_router
 from api.routes.bookmarks import router as bookmarks_router
+from api.routes.documents import router as documents_router
 from api.core.database import connect_to_mongo, close_mongo_connection
+
+
+def get_allowed_origins() -> list[str]:
+    """Return explicit browser origins; never combine credentialed CORS with *."""
+    configured = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+    origins = [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+    if not origins or "*" in origins:
+        raise RuntimeError("ALLOWED_ORIGINS must contain one or more explicit origins and cannot include '*'.")
+    return origins
+
+
+allowed_origins = get_allowed_origins()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,14 +43,11 @@ app = FastAPI(
 # Enable CORS for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local dev
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from fastapi.staticfiles import StaticFiles
-import os
 
 # Include API routes
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
@@ -44,10 +55,7 @@ app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(projects_router, prefix="/api/v1/projects", tags=["Projects"])
 app.include_router(data_router, prefix="/api/v1/data", tags=["Domain Data"])
 app.include_router(bookmarks_router, prefix="/api/v1/bookmarks", tags=["Bookmarks"])
-
-# Mount static files for PDFs
-docs_path = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
-app.mount("/pdfs", StaticFiles(directory=docs_path), name="pdfs")
+app.include_router(documents_router, prefix="/pdfs", tags=["Documents"])
 
 @app.get("/")
 async def root():
