@@ -16,6 +16,29 @@ from api.core.deps import get_current_user
 
 router = APIRouter()
 
+async def get_project_with_role(db, project_id: str, user: dict, required_roles: list = None):
+    from bson.objectid import ObjectId
+    try:
+        obj_id = ObjectId(project_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid project ID format")
+        
+    project = await db.projects.find_one({"_id": obj_id, "$or": [{"user_id": user["id"]}, {"members.user_id": user["id"]}]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    user_role = "OWNER" # Legacy fallback
+    if "members" in project:
+        member = next((m for m in project.get("members", []) if m["user_id"] == user["id"]), None)
+        if member:
+            user_role = member.get("role", "VIEWER")
+            
+    if required_roles and user_role not in required_roles:
+        raise HTTPException(status_code=403, detail=f"Insufficient permissions. Requires one of: {required_roles}")
+        
+    project["my_role"] = user_role
+    return project, obj_id, user_role
+
 def serialize_project(doc) -> ProjectResponse:
     """Helper to convert MongoDB document to Pydantic Response."""
     return ProjectResponse(
@@ -104,7 +127,7 @@ async def create_project(project: ProjectCreate, user: dict = Depends(get_curren
     steps = [step.dict() for step in project.initial_steps]
     
     new_project = {
-        "user_id": user["id"],
+        "user_id": user["id"],  # Keep for backward compatibility for now
         "title": project.title,
         "standard_id": project.standard_id,
         "scheme_id": project.scheme_id,
@@ -112,7 +135,13 @@ async def create_project(project: ProjectCreate, user: dict = Depends(get_curren
         "status": "PLANNING",
         "steps": steps,
         "saved_labs": [],
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
+        "members": [{
+            "user_id": user["id"],
+            "email": user["email"],
+            "role": "OWNER",
+            "added_at": datetime.utcnow()
+        }]
     }
     
     result = await db.projects.insert_one(new_project)
@@ -131,39 +160,20 @@ async def create_project(project: ProjectCreate, user: dict = Depends(get_curren
 @router.get("/", response_model=List[ProjectResponse])
 async def list_projects(user: dict = Depends(get_current_user)):
     db = get_database()
-    
-    # Fetch all projects for this user, sorted newest first
-    cursor = db.projects.find({"user_id": user["id"]}).sort("created_at", -1)
-    projects = await cursor.to_list(length=100)
-    
-    return [serialize_project(proj) for proj in projects]
+    cursor = db.projects.find({"$or": [{"user_id": user["id"]}, {"members.user_id": user["id"]}]}).sort("created_at", -1)
+    projects = await cursor.to_list(length=50)
+    return [serialize_project(p) for p in projects]
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(project_id: str, user: dict = Depends(get_current_user)):
     db = get_database()
-    
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
-        
-    project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-        
+    project, obj_id, user_role = await get_project_with_role(db, project_id, user)
     return serialize_project(project)
 
 @router.get("/{project_id}/export")
 async def export_project_pdf(project_id: str, user: dict = Depends(get_current_user)):
     db = get_database()
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
-        
-    project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project, obj_id, user_role = await get_project_with_role(db, project_id, user)
         
     user_doc = await db.users.find_one({"email": user["email"]})
     profile = user_doc.get("profile", {}) if user_doc else {}
@@ -274,13 +284,10 @@ async def export_project_pdf(project_id: str, user: dict = Depends(get_current_u
 @router.patch("/{project_id}", response_model=dict)
 async def update_project_status(project_id: str, update: ProjectStatusUpdate, user: dict = Depends(get_current_user)):
     db = get_database()
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
+    project, obj_id, user_role = await get_project_with_role(db, project_id, user, required_roles=["OWNER", "EDITOR"])
         
     result = await db.projects.update_one(
-        {"_id": obj_id, "user_id": user["id"]},
+        {"_id": obj_id},
         {"$set": {"status": update.status}}
     )
     
@@ -292,14 +299,7 @@ async def update_project_status(project_id: str, update: ProjectStatusUpdate, us
 @router.post("/{project_id}/duplicate", response_model=ProjectResponse)
 async def duplicate_project(project_id: str, user: dict = Depends(get_current_user)):
     db = get_database()
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
-        
-    source_project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
-    if not source_project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    source_project, obj_id, user_role = await get_project_with_role(db, project_id, user)
         
     # Reset steps to PENDING
     new_steps = []
@@ -309,7 +309,7 @@ async def duplicate_project(project_id: str, user: dict = Depends(get_current_us
         new_steps.append(new_step)
         
     new_project = {
-        "user_id": user["id"],
+        "user_id": user["id"], # Legacy fallback
         "title": source_project.get("title", "Project") + " (Copy)",
         "standard_id": source_project.get("standard_id", ""),
         "scheme_id": source_project.get("scheme_id", ""),
@@ -317,7 +317,13 @@ async def duplicate_project(project_id: str, user: dict = Depends(get_current_us
         "status": "PLANNING",
         "steps": new_steps,
         "saved_labs": source_project.get("saved_labs", []),
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
+        "members": [{
+            "user_id": user["id"],
+            "email": user["email"],
+            "role": "OWNER",
+            "added_at": datetime.utcnow()
+        }]
     }
     
     result = await db.projects.insert_one(new_project)
@@ -328,16 +334,7 @@ async def duplicate_project(project_id: str, user: dict = Depends(get_current_us
 @router.patch("/{project_id}/checklist/{step_id}", response_model=dict)
 async def update_step_status(project_id: str, step_id: str, update: StepUpdate, user: dict = Depends(get_current_user)):
     db = get_database()
-    
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
-        
-    # First, verify project exists and belongs to user
-    project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project, obj_id, user_role = await get_project_with_role(db, project_id, user, required_roles=["OWNER", "EDITOR"])
         
     # Find the specific step and update it in memory to calculate new percentage
     steps = project.get("steps", [])
@@ -386,15 +383,7 @@ class NewStepRequest(BaseModel):
 @router.post("/{project_id}/checklist", response_model=dict)
 async def add_checklist_step(project_id: str, request: NewStepRequest, user: dict = Depends(get_current_user)):
     db = get_database()
-    
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
-        
-    project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project, obj_id, user_role = await get_project_with_role(db, project_id, user, required_roles=["OWNER", "EDITOR"])
         
     new_step_id = "c" + str(uuid.uuid4())[:8]
     new_step = {
@@ -423,15 +412,7 @@ async def add_checklist_step(project_id: str, request: NewStepRequest, user: dic
 @router.delete("/{project_id}/checklist/{step_id}", response_model=dict)
 async def delete_checklist_step(project_id: str, step_id: str, user: dict = Depends(get_current_user)):
     db = get_database()
-    
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
-        
-    project = await db.projects.find_one({"_id": obj_id, "user_id": user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project, obj_id, user_role = await get_project_with_role(db, project_id, user, required_roles=["OWNER", "EDITOR"])
         
     steps = [s for s in project.get("steps", []) if s["id"] != step_id]
     
@@ -451,13 +432,9 @@ async def delete_checklist_step(project_id: str, step_id: str, user: dict = Depe
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(project_id: str, user: dict = Depends(get_current_user)):
     db = get_database()
-    
-    try:
-        obj_id = ObjectId(project_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid project ID format")
+    project, obj_id, user_role = await get_project_with_role(db, project_id, user, required_roles=["OWNER"])
         
-    result = await db.projects.delete_one({"_id": obj_id, "user_id": user["id"]})
+    result = await db.projects.delete_one({"_id": obj_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Project not found")
         

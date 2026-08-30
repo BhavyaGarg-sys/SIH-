@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Send, Loader2, FileText, Bot, User, CheckCircle2, Circle, Trash2, Plus, MessageSquare, ChevronRight, Printer, Bookmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ShareModal from '../components/workspace/ShareModal';
+import { Share2 } from 'lucide-react';
 
 import { toast } from 'sonner';
 
@@ -21,7 +23,12 @@ export default function ProjectWorkspace() {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [pdfViewerUrl, setPdfViewerUrl] = useState(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const userRole = project?.my_role || "OWNER";
+  const isViewer = userRole === "VIEWER";
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -585,6 +592,13 @@ export default function ProjectWorkspace() {
           </div>
         </div>
       )}
+
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        projectId={id}
+        currentUserId={user?.id}
+      />
     </div>
   );
 }

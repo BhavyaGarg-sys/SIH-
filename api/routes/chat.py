@@ -6,6 +6,7 @@ from api.services.intent_router import extract_intent
 from api.services.rag_service import generate_rag_response
 from api.core.database import get_database
 from api.core.deps import get_current_user
+from api.routes.projects import get_project_with_role
 
 router = APIRouter()
 
@@ -39,8 +40,11 @@ async def get_chat_sessions(current_user: dict = Depends(get_current_user)):
 @router.get("/project/{project_id}/sessions")
 async def get_project_sessions(project_id: str, current_user: dict = Depends(get_current_user)):
     db = get_database()
+    # Verify access to project
+    await get_project_with_role(db, project_id, current_user)
+    
     pipeline = [
-        {"$match": {"user_email": current_user["email"], "project_id": project_id}},
+        {"$match": {"project_id": project_id}},
         {"$sort": {"_id": 1}},
         {"$group": {
             "_id": "$session_id",
@@ -71,7 +75,20 @@ async def delete_chat_session(session_id: str, current_user: dict = Depends(get_
 @router.get("/history/{session_id}")
 async def get_chat_history(session_id: str, current_user: dict = Depends(get_current_user)):
     db = get_database()
-    cursor = db.chats.find({"user_email": current_user["email"], "session_id": session_id}).sort("_id", 1)
+    
+    # Check first message to see if it's tied to a project
+    first_msg = await db.chats.find_one({"session_id": session_id})
+    if not first_msg:
+        return []
+        
+    if first_msg.get("project_id"):
+        # Verify project access
+        await get_project_with_role(db, first_msg["project_id"], current_user)
+        # Fetch all messages in this session regardless of user_email
+        cursor = db.chats.find({"session_id": session_id}).sort("_id", 1)
+    else:
+        # General chat
+        cursor = db.chats.find({"user_email": current_user["email"], "session_id": session_id}).sort("_id", 1)
     messages = await cursor.to_list(length=100)
     
     # Format for frontend
@@ -96,6 +113,9 @@ async def process_chat_message(
     
     db = get_database()
     
+    if project_id:
+        await get_project_with_role(db, project_id, current_user, required_roles=["OWNER", "EDITOR"])
+
     # Save User Message
     await db.chats.insert_one({
         "user_email": current_user["email"],
