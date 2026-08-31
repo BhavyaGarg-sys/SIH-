@@ -131,82 +131,38 @@ export default function ProjectWorkspace() {
     const isNewSession = messages.length === 0;
 
     try {
-        const token = localStorage.getItem('token');
-        const fetchResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            message: userMessage.content,
-            interaction_mode: "guided_ui",
-            session_id: activeSessionId,
-            project_id: id 
-          })
-        });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/message`, {
+        message: userMessage.content,
+        interaction_mode: "guided_ui",
+        session_id: activeSessionId,
+        project_id: id 
+      });
 
-        if (!fetchResponse.ok) throw new Error('Network response was not ok');
+      const data = response.data;
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.ai_text,
+        ui_widget: data.ui_widget,
+        citations: data.citations,
+      };
 
-        // Create empty assistant message
-        setMessages((prev) => [...prev, { role: 'assistant', content: '', citations: [], ui_widget: null }]);
-
-        const reader = fetchResponse.body.getReader();
-        const decoder = new TextDecoder();
-        let assistantContent = '';
-        let citations = [];
-        let ui_widget = null;
-        let last_intent = "GENERAL";
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n\n');
-          buffer = lines.pop(); // Keep incomplete chunk in buffer
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.citations) citations = data.citations;
-                if (data.ui_widget) ui_widget = data.ui_widget;
-                if (data.chunk) assistantContent += data.chunk;
-                if (data.intent) last_intent = data.intent;
-                
-                setMessages((prev) => {
-                  const newMsgs = [...prev];
-                  newMsgs[newMsgs.length - 1] = {
-                    role: 'assistant',
-                    content: assistantContent,
-                    citations: citations,
-                    ui_widget: ui_widget,
-                    intent: last_intent
-                  };
-                  return newMsgs;
-                });
-              } catch (e) {
-                // Ignore parse errors on incomplete chunks
-              }
-            }
-          }
-        }
-
-        if (ui_widget && (ui_widget.type === 'REPORT_LINK' || ui_widget.type === 'report_link') && ui_widget.data.report_id) {
-           navigate(`/report/${ui_widget.data.report_id}`);
-        }
-        if (ui_widget && (ui_widget.type === 'COMPARISON_LINK' || ui_widget.type === 'comparison_link') && ui_widget.data.comparison_id) {
-           navigate(`/report/${ui_widget.data.comparison_id}`);
+      
+        if (data.ui_widget && (data.ui_widget.type === 'REPORT_LINK' || data.ui_widget.type === 'report_link') && data.ui_widget.data.report_id) {
+           navigate(`/report/${data.ui_widget.data.report_id}`);
         }
         
-        if (isNewSession) {
-           const sessionsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/project/${id}/sessions`);
-           setSessions(sessionsRes.data);
+        if (data.ui_widget && (data.ui_widget.type === 'COMPARISON_LINK' || data.ui_widget.type === 'comparison_link') && data.ui_widget.data.comparison_id) {
+           navigate(`/report/${data.ui_widget.data.comparison_id}`);
         }
-      } catch (error) {
+        
+        setMessages((prev) => [...prev, assistantMessage]);
+
+      
+      if (isNewSession) {
+         const sessionsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/chat/project/${id}/sessions`);
+         setSessions(sessionsRes.data);
+      }
+    } catch (error) {
       console.error("Error querying API:", error);
       setApiError(error.message || 'Failed to fetch response. Please try again.');
       setTimeout(() => setApiError(null), 5000);

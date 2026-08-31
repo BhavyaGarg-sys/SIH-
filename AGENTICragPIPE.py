@@ -216,6 +216,8 @@ def route_after_decision(state: GraphState):
     return state["decision"]
 
 # ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
 # 4. BUILDING THE GRAPH (Wiring it all together)
 # ------------------------------------------------------------------
 builder = StateGraph(GraphState)
@@ -225,22 +227,22 @@ builder.add_node("route", node_route)
 builder.add_node("rewrite", node_rewrite)
 builder.add_node("retrieve", node_retrieve)
 builder.add_node("evaluate", node_evaluate)
-builder.add_node("generate", node_generate_rag)
-builder.add_node("compare", node_compare)
-builder.add_node("report", node_report)
-builder.add_node("general", node_general)
 
 # Define the flow
 builder.set_entry_point("route")
+
+def route_after_decision(state: GraphState):
+    decision = state["decision"]
+    if decision == "search":
+        return "rewrite"
+    return "end"
 
 # The router decides which sub-graph to execute
 builder.add_conditional_edges(
     "route", route_after_decision,
     {
-        "search": "rewrite",
-        "compare": "compare",
-        "report": "report",
-        "general": "general"
+        "rewrite": "rewrite",
+        "end": END
     }
 )
 
@@ -248,20 +250,22 @@ builder.add_conditional_edges(
 builder.add_edge("rewrite", "retrieve")
 builder.add_edge("retrieve", "evaluate")
 
+def route_after_eval(state: GraphState):
+    MAX_RETRIES = 2
+    if state.get("is_relevant", False):
+        return "end"
+    if state.get("revision_count", 0) >= MAX_RETRIES:
+        return "end"
+    return "rewrite"
+
 # The self-correction edge!
 builder.add_conditional_edges(
     "evaluate", route_after_eval,
     {
-        "generate": "generate",
+        "end": END,
         "rewrite": "rewrite"  # Loops back to rewrite query!
     }
 )
-
-# All paths lead to END
-builder.add_edge("generate", END)
-builder.add_edge("compare", END)
-builder.add_edge("report", END)
-builder.add_edge("general", END)
 
 # Compile the agent!
 app = builder.compile()
@@ -271,9 +275,9 @@ app = builder.compile()
 # 5. WRAPPER CLASS (For API Drop-in Replacement)
 # ------------------------------------------------------------------
 class AgenticRAGPipeline:
-    async def run(self, user_message: str, user_profile: dict = None) -> Tuple[str, List[Citation], Optional[UIWidget]]:
+    async def run(self, user_message: str) -> dict:
         print(f"\n{'='*60}")
-        print(f"USER: {user_message}")
+        print(f"AGENTIC RAG PIPELINE: {user_message}")
         print(f"{'-'*60}")
         
         initial_state = {
@@ -288,39 +292,4 @@ class AgenticRAGPipeline:
             "ui_widget": None,
         }
         final_state = await app.ainvoke(initial_state)
-        
-        ai_text = final_state.get("ai_text", "")
-        citations = final_state.get("citations", [])
-        ui_widget = final_state.get("ui_widget", None)
-        
-        print(f"{'-'*60}")
-        print(f"RESPONSE: {ai_text}")
-        if citations:
-            for c in citations:
-                print(f"  CITATION: standard={c.standard}, clause={c.clause}")
-        if ui_widget:
-            print(f"  WIDGET: type={ui_widget.type}")
-        print(f"{'='*60}")
-        
-        return ai_text, citations, ui_widget
-
-# ------------------------------------------------------------------
-# Quick Test — 4 queries covering all paths
-# ------------------------------------------------------------------
-if __name__ == "__main__":
-    agent = AgenticRAGPipeline()
-    
-    async def run_test(query, label):
-        print(f"\n[TEST] {label}")
-        start = time.time()
-        await agent.run(query)
-        elapsed = time.time() - start
-        print(f"[TIME] {elapsed:.4f} seconds\n")
-
-    async def run_all():
-        await run_test("What is the pH limit for water?", "DB Search with Retry Loop")
-        await run_test("Can you compare amendments for IS 10500?", "Amendment Tool (DB Skipped)")
-        await run_test("Export this chat as a report.", "Report Tool (DB Skipped)")
-        await run_test("Hello there!", "General Chat (Everything Skipped)")
-
-    asyncio.run(run_all())
+        return final_state

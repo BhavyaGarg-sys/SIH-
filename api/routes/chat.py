@@ -5,7 +5,8 @@ from fastapi import Depends
 from fastapi.responses import StreamingResponse
 from typing import List
 from api.schemas.chat import ChatMessageRequest, ChatMessageResponse, UIWidget, Citation
-from api.services.intent_router import extract_intent
+from AGENTICragPIPE import AgenticRAGPipeline
+agentic_rag = AgenticRAGPipeline()
 from api.services.rag_service import generate_rag_response
 from api.services.report_generator import generate_chat_report
 from api.services.amendment_service import generate_amendment_comparison
@@ -147,91 +148,78 @@ async def process_chat_message(
     db_user = await db.users.find_one({"email": current_user["email"]})
     user_profile = db_user.get("profile") if db_user else None
     
-    # 1. Extract intent first (fast)
-    intent_data = await extract_intent(request.message)
+    # 1. Run the agentic pipeline to route, evaluate, and retrieve
+    agent_state = await agentic_rag.run(request.message)
+    decision = agent_state.get("decision", "general")
+    documents = agent_state.get("documents", [])
     
-    async def event_generator():
-        ui_widget = None
-        citations = []
-        full_ai_text = ""
+    ui_widget = None
+    citations = []
+    full_ai_text = ""
+    
+    if decision == "report":
+        cursor = db.chats.find({"session_id": session_id}).sort("_id", 1)
+        chat_history = await cursor.to_list(length=100)
+        report_data = await generate_chat_report(chat_history, user_profile)
         
-        # 2. Check if we need to bypass streaming for heavy tool intents
-        if intent_data.intent == "EXPORT_REPORT":
-            cursor = db.chats.find({"session_id": session_id}).sort("_id", 1)
-            chat_history = await cursor.to_list(length=100)
-            report_data = await generate_chat_report(chat_history, user_profile)
-            
-            result = await db.reports.insert_one({
-                "session_id": session_id,
-                "project_id": project_id,
-                "user_email": current_user["email"],
-                "data": report_data
-            })
-            report_id = str(result.inserted_id)
-            
-            ui_widget = UIWidget(type="REPORT_LINK", data={"report_id": report_id, "title": report_data.get("title", "Exported Report")})
-            full_ai_text = "I've generated a formal PDF report based on our conversation. Click the button below to view and download it."
-            yield f"data: {json.dumps({'chunk': full_ai_text, 'ui_widget': ui_widget.dict()})}\n\n"
-
-            
-        elif intent_data.intent == "COMPARE_AMENDMENTS":
-            product = intent_data.product or "the requested product"
-            amendment_data = await generate_amendment_comparison(product, intent_data.is_number)
-            
-            result = await db.reports.insert_one({
-                "session_id": session_id,
-                "project_id": project_id,
-                "user_email": current_user["email"],
-                "type": "AMENDMENT",
-                "data": amendment_data
-            })
-            report_id = str(result.inserted_id)
-            
-            ui_widget = UIWidget(type="COMPARISON_LINK", data={"comparison_id": report_id, "title": amendment_data.get("title", "Amendment Comparison")})
-            full_ai_text = f"I've generated a side-by-side comparison of the recent amendments for {product}. Click below to open it in a new page."
-            yield f"data: {json.dumps({'chunk': full_ai_text, 'ui_widget': ui_widget.dict()})}\n\n"
-
-            
-        elif intent_data.intent == "CERTIFICATION" and request.interaction_mode == "guided_ui":
-            product = intent_data.product or "your product"
-            standard = intent_data.is_number or "IS 16102"
-            ui_widget = UIWidget(type="COMPLIANCE_DASHBOARD", data={"standard": standard, "scheme": "CRS", "checklist": [{"id": "c1", "title": f"Identify applicable IS standard for {product}"}, {"id": "c2", "title": "Setup In-House Testing Facility"}, {"id": "c3", "title": "Submit sample to BIS recognized lab"}, {"id": "c4", "title": "File application on Manak Online"}]})
-            full_ai_text = f"Here is the guided compliance dashboard for {product} under {standard}."
-            yield f"data: {json.dumps({'chunk': full_ai_text, 'ui_widget': ui_widget.dict()})}\n\n"
-
-            
-        elif intent_data.intent == "VERIFICATION":
-            ui_widget = UIWidget(type="HALLMARK_GUIDE", data={"instruction": "Enter the 6-digit HUID code below to verify."})
-            full_ai_text = "Please use the widget below to verify the HUID."
-            yield f"data: {json.dumps({'chunk': full_ai_text, 'ui_widget': ui_widget.dict()})}\n\n"
-
-            
-        else:
-            # Standard Chat: Stream the RAG response
-            from api.services.rag_service import stream_rag_response
-            async for sse_event in stream_rag_response(request.message, user_profile=user_profile):
-                # We need to capture the full text and citations to save to DB later
-                if sse_event.startswith("data: "):
-                    try:
-                        data = json.loads(sse_event[6:].strip())
-                        if "citations" in data:
-                            citations = [Citation(**c) for c in data["citations"]]
-                        if "chunk" in data:
-                            full_ai_text += data["chunk"]
-                    except:
-                        pass
-                yield sse_event
-
-        # Save Assistant Message to DB after stream completes
-        await db.chats.insert_one({
-            "user_email": current_user["email"],
+        result = await db.reports.insert_one({
             "session_id": session_id,
             "project_id": project_id,
-            "role": "assistant",
-            "content": full_ai_text,
-            "ui_widget": ui_widget.dict() if ui_widget else None,
-            "citations": [c.dict() for c in citations],
-            "intent": intent_data.intent if hasattr(intent_data, 'intent') else "GENERAL"
+            "user_email": current_user["email"],
+            "data": report_data
         })
+        report_id = str(result.inserted_id)
         
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+        ui_widget = UIWidget(type="REPORT_LINK", data={"report_id": report_id, "title": report_data.get("title", "Exported Report")})
+        full_ai_text = "I've generated a formal PDF report based on our conversation. Click the button below to view and download it."
+        
+    elif decision == "compare":
+        product = "the requested product"
+        amendment_data = await generate_amendment_comparison(product, None)
+        
+        result = await db.reports.insert_one({
+            "session_id": session_id,
+            "project_id": project_id,
+            "user_email": current_user["email"],
+            "type": "AMENDMENT",
+            "data": amendment_data
+        })
+        report_id = str(result.inserted_id)
+        
+        ui_widget = UIWidget(type="COMPARISON_LINK", data={"comparison_id": report_id, "title": amendment_data.get("title", "Amendment Comparison")})
+        full_ai_text = f"I've generated a side-by-side comparison of the recent amendments for {product}. Click below to open it in a new page."
+        
+    elif decision == "certification" and request.interaction_mode == "guided_ui":
+        product = "your product"
+        standard = "IS 16102"
+        ui_widget = UIWidget(type="COMPLIANCE_DASHBOARD", data={"standard": standard, "scheme": "CRS", "checklist": [{"id": "c1", "title": f"Identify applicable IS standard for {product}"}, {"id": "c2", "title": "Setup In-House Testing Facility"}, {"id": "c3", "title": "Submit sample to BIS recognized lab"}, {"id": "c4", "title": "File application on Manak Online"}]})
+        full_ai_text = f"Here is the guided compliance dashboard for {product} under {standard}."
+        
+    elif decision == "verification":
+        ui_widget = UIWidget(type="HALLMARK_GUIDE", data={"instruction": "Enter the 6-digit HUID code below to verify."})
+        full_ai_text = "Please use the widget below to verify the HUID."
+        
+    else:
+        # Standard Chat: generate synchronously
+        from api.services.rag_service import generate_rag_response
+        full_ai_text, citations = await generate_rag_response(request.message, user_profile=user_profile, pre_retrieved_docs=documents)
+
+    # Save Assistant Message to DB
+    await db.chats.insert_one({
+        "user_email": current_user["email"],
+        "session_id": session_id,
+        "project_id": project_id,
+        "role": "assistant",
+        "content": full_ai_text,
+        "ui_widget": ui_widget.dict() if ui_widget else None,
+        "citations": [c.dict() for c in citations],
+        "intent": decision.upper()
+    })
+    
+    return ChatMessageResponse(
+        session_id=session_id,
+        ai_text=full_ai_text,
+        ui_widget=ui_widget,
+        citations=citations,
+        intent=decision.upper()
+    )
