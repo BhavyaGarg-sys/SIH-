@@ -32,17 +32,20 @@ async def extract_intent(user_message: str) -> QueryIntent:
         "6. GENERAL: Greeting or unrelated queries."
     )
 
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=[
-            system_prompt,
-            user_message
-        ],
-        config={
-            "response_mime_type": "application/json",
-            "response_schema": QueryIntent,
-            "temperature": 0.0,
-        }
-    )
-
-    return response.parsed
+    try:
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                system_prompt,
+                user_message
+            ],
+            config={
+                "response_mime_type": "application/json",
+                "response_schema": QueryIntent,
+                "temperature": 0.0,
+            }
+        )
+        return response.parsed
+    except Exception as e:
+        print(f"Intent Extraction Failed: {e}")
+        return QueryIntent(intent="GENERAL")

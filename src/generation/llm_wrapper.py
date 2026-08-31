@@ -93,3 +93,27 @@ class LLMWrapper:
             f"Received prompt ({len(prompt)} characters). "
             f"Configure valid LLM_API_KEY in .env to enable live generation."
         )
+
+
+    async def astream(self, prompt: str):
+        """Asynchronously yield response chunks for a given prompt string."""
+        if self._llm is not None:
+            try:
+                # Some LangChain models (like ChatGoogleGenerativeAI) support astream natively
+                async for chunk in self._llm.astream(prompt):
+                    if hasattr(chunk, "content"):
+                        if isinstance(chunk.content, str):
+                            yield chunk.content
+                        elif isinstance(chunk.content, list):
+                            for block in chunk.content:
+                                if isinstance(block, dict) and 'text' in block:
+                                    yield block['text']
+                                elif isinstance(block, str):
+                                    yield block
+                    else:
+                        yield str(chunk)
+            except Exception as e:
+                logger.error(f"Error streaming from LLM provider '{self.provider}': {e}")
+                yield f"\n[Streaming Error: {e}]"
+        else:
+            yield f"[LLM Wrapper Stub ({self.provider}:{self.model_name})]: Received prompt. Configure API key for live streaming."
