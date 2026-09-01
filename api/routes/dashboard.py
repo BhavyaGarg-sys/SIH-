@@ -9,9 +9,9 @@ router = APIRouter()
 @router.get("/")
 async def get_dashboard_data(user: dict = Depends(get_current_user)):
     cache_key = f"dashboard_{user['id']}"
-    cached_data = await cache_manager.get(cache_key)
-    if cached_data:
-        return cached_data
+    # cached_data = await cache_manager.get(cache_key)
+    # if cached_data:
+    #     return cached_data
 
     db = get_database()
     
@@ -81,6 +81,6 @@ async def get_dashboard_data(user: dict = Depends(get_current_user)):
         "recentActivity": recent_activity
     }
     
-    await cache_manager.set(cache_key, response_data, ttl=2)
+    # await cache_manager.set(cache_key, response_data, ttl=2)
     
     return response_data
