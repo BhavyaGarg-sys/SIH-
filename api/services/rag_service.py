@@ -16,7 +16,7 @@ _llm = LLMWrapper()
 def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
-async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict = None) -> Tuple[str, List[Citation]]:
+async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict = None, pre_retrieved_docs: list = None) -> Tuple[str, List[Citation]]:
     # Profile context string
     profile_str = ""
     if user_profile and user_profile.get('profile_complete'):
@@ -60,7 +60,12 @@ async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict =
     
 # 3. Format prompt and generate AI text
     prompt = format_rag_prompt(query=query, context_chunks=context_texts)
-    ai_text = _llm.generate(prompt)
+    try:
+        ai_text = _llm.generate(prompt)
+    except Exception as e:
+        print(f"[API ERROR] {e}")
+        ai_text = "I am currently experiencing high traffic and have hit my API rate limits! However, I successfully retrieved the following exact documents from the BIS standards database regarding your query. Please click on the citations below to view the relevant information directly!"
+
     
     # Save to semantic cache
     import hashlib
@@ -88,7 +93,7 @@ async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict =
 
 import json
 
-async def stream_rag_response(query: str, top_k: int = 3, user_profile: dict = None):
+async def stream_rag_response(query: str, top_k: int = 3, user_profile: dict = None, pre_retrieved_docs: list = None):
     profile_str = ""
     if user_profile and user_profile.get('profile_complete'):
         profile_str = f"[User context: {user_profile.get('industry_sector', 'User')} in {user_profile.get('state', 'India')}, Company: {user_profile.get('company_name', 'Unknown')}]\n"
@@ -97,7 +102,7 @@ async def stream_rag_response(query: str, top_k: int = 3, user_profile: dict = N
     query_emb = _retriever.embedding_model.embed_query(query)
     is_hit, cached_text, cached_citations = False, None, []
     
-    if cache_manager.is_connected():
+    if cache_manager.is_connected:
         try:
             cached_history = await cache_manager.get("recent_llm_queries")
             if cached_history:
@@ -114,15 +119,27 @@ async def stream_rag_response(query: str, top_k: int = 3, user_profile: dict = N
     if is_hit:
         citations = cached_citations
     else:
-        results = _retriever.search(query, top_k=top_k)
-        citations = [
-            Citation(
-                standard=res.metadata.get("source", "Unknown Standard"),
-                clause=res.metadata.get("clause", "General"),
-                snippet=res.text[:200] + "...",
-                page=str(res.metadata.get("page", ""))
-            ) for res in results
-        ]
+        if pre_retrieved_docs is not None:
+            results = pre_retrieved_docs
+            citations = []
+            for res in results:
+                citations.append(Citation(
+                    standard=res.get("source", res.get("standard", "Unknown Standard")),
+                    clause=res.get("clause", "General"),
+                    snippet=res.get("text", "")[:200] + "...",
+                    page=str(res.get("page", ""))
+                ))
+        else:
+            # Fallback if no pre_retrieved_docs provided
+            results = _retriever.retrieve(query, top_k=top_k)
+            citations = []
+            for res in results:
+                citations.append(Citation(
+                    standard=res.get("source", "Unknown Standard"),
+                    clause=res.get("clause", "General"),
+                    snippet=res.get("text", "")[:200] + "...",
+                    page=str(res.get("page", ""))
+                ))
         
     yield f"data: {json.dumps({'citations': [c.dict() for c in citations]})}\n\n"
     
@@ -131,7 +148,7 @@ async def stream_rag_response(query: str, top_k: int = 3, user_profile: dict = N
         yield f"data: {json.dumps({'chunk': cached_text})}\n\n"
         return
         
-    context_texts = "\n\n".join([res.text for res in results])
+    context_texts = "\n\n".join([res.get("text", "") for res in results])
     prompt = format_rag_prompt(query=query, context_chunks=context_texts)
     
     full_text = ""
@@ -141,7 +158,7 @@ async def stream_rag_response(query: str, top_k: int = 3, user_profile: dict = N
         yield f"data: {json.dumps({'chunk': chunk})}\n\n"
         
     # Save to semantic cache
-    if cache_manager.is_connected():
+    if cache_manager.is_connected:
         try:
             cached_history = await cache_manager.get("recent_llm_queries") or []
             cached_history.append({

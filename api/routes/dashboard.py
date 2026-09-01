@@ -9,9 +9,9 @@ router = APIRouter()
 @router.get("/")
 async def get_dashboard_data(user: dict = Depends(get_current_user)):
     cache_key = f"dashboard_{user['id']}"
-    cached_data = await cache_manager.get(cache_key)
-    if cached_data:
-        return cached_data
+    # cached_data = await cache_manager.get(cache_key)
+    # if cached_data:
+    #     return cached_data
 
     db = get_database()
     
@@ -52,7 +52,7 @@ async def get_dashboard_data(user: dict = Depends(get_current_user)):
     # 3. Recent Activity (Merge Projects and Bookmarks)
     recent_activity = []
     
-    projects_cursor = db.projects.find({"user_id": user["id"]}).sort("created_at", -1).limit(5)
+    projects_cursor = db.projects.find({"user_id": user["id"]}).sort("created_at", -1)
     async for p in projects_cursor:
         recent_activity.append({
             "standard": p.get("standard_id", "N/A"),
@@ -81,6 +81,6 @@ async def get_dashboard_data(user: dict = Depends(get_current_user)):
         "recentActivity": recent_activity
     }
     
-    await cache_manager.set(cache_key, response_data, ttl=60)
+    # await cache_manager.set(cache_key, response_data, ttl=2)
     
     return response_data
