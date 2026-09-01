@@ -190,8 +190,10 @@ async def process_chat_message(
         full_ai_text = f"I've generated a side-by-side comparison of the recent amendments for {product}. Click below to open it in a new page."
         
     elif decision == "certification" and request.interaction_mode == "guided_ui":
+        import re
+        match = re.search(r'(IS\s*\d+)', request.message, re.IGNORECASE)
+        standard = match.group(1).upper() if match else "your requested standard"
         product = "your product"
-        standard = "IS 16102"
         ui_widget = UIWidget(type="COMPLIANCE_DASHBOARD", data={"standard": standard, "scheme": "CRS", "checklist": [{"id": "c1", "title": f"Identify applicable IS standard for {product}"}, {"id": "c2", "title": "Setup In-House Testing Facility"}, {"id": "c3", "title": "Submit sample to BIS recognized lab"}, {"id": "c4", "title": "File application on Manak Online"}]})
         full_ai_text = f"Here is the guided compliance dashboard for {product} under {standard}."
         

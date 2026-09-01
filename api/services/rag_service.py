@@ -60,7 +60,12 @@ async def generate_rag_response(query: str, top_k: int = 3, user_profile: dict =
     
 # 3. Format prompt and generate AI text
     prompt = format_rag_prompt(query=query, context_chunks=context_texts)
-    ai_text = _llm.generate(prompt)
+    try:
+        ai_text = _llm.generate(prompt)
+    except Exception as e:
+        print(f"[API ERROR] {e}")
+        ai_text = "I am currently experiencing high traffic and have hit my API rate limits! However, I successfully retrieved the following exact documents from the BIS standards database regarding your query. Please click on the citations below to view the relevant information directly!"
+
     
     # Save to semantic cache
     import hashlib

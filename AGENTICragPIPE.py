@@ -44,6 +44,7 @@ def node_route(state: GraphState) -> GraphState:
     if "compare" in query: decision = "compare"
     elif "report" in query: decision = "report"
     elif "hello" in query: decision = "general"
+    elif "certif" in query or "manufacture" in query: decision = "certification"
     else: decision = "search"
     
     return {"decision": decision}
