@@ -1,223 +1,92 @@
-# BIS Document Question-Answering System (RAG)
+﻿# BIS Document Question-Answering System (Agentic RAG)
 
 **SIH Problem Statement 107 (PS107)**
 
-A modular, high-performance Retrieval-Augmented Generation (RAG) question-answering system for Bureau of Indian Standards (BIS) technical standards and compliance documentation.
+A modular, high-performance **Agentic Retrieval-Augmented Generation (RAG) system** for Bureau of Indian Standards (BIS) technical standards, compliance documentation, and certification workflows. 
+
+Designed specifically to help MSMEs navigate dense legal standards without requiring expensive compliance consultants.
 
 ---
 
-## Architecture Principle & Design
+## 🚀 Key Features
 
-This application avoids monolithic "black box" RAG frameworks (such as opaque end-to-end chains) to ensure full transparency and control over document extraction, text cleaning, chunking, embedding generation, vector indexing, document retrieval, and prompt context formatting.
-
-```
-BIS PDFs
-   ↓
-PDF Extraction (PyMuPDF)
-   ↓
-Cleaning (DocumentProcessor)
-   ↓
-Chunking (TextChunker via langchain-text-splitters)
-   ↓
-Embedding Model (SentenceTransformers)
-   ↓
-FAISS Vector Store
-   ↓
-Retriever
-   ↓
-Retrieved Context
-   ↓
-LLM Wrapper (langchain-core provider abstraction)
-   ↓
-LLM Provider (OpenAI / Gemini / Ollama)
-   ↓
-Answer + Sources
-   ↓
-FastAPI Layer
-   ↓
-Web Frontend (Future)
-```
+- **Agentic Intent Routing (LangGraph)**: The AI automatically categorizes user queries to generate standard RAG answers, side-by-side amendment comparisons, formal PDF reports, or step-by-step compliance dashboards based on intent.
+- **Self-Correcting RAG**: If the initial vector search retrieves irrelevant context, the LangGraph agent autonomously rewrites the query and tries again before passing it to the final LLM.
+- **Interactive UI Workspaces (React + Vite)**: A dedicated workspace for each product standard containing:
+  - Guided step-by-step Compliance Roadmaps
+  - Continuous chat threads with AI citations
+  - Automatic PDF generation of chat reports
+- **Semantic Caching (Redis + FAISS)**: Exact-match semantic caching (Redis) prevents duplicate LLM calls, saving API costs and drastically reducing latency for common queries.
+- **User Personas & Dashboards**: Dedicated UI dashboards tracking recent projects, bookmarked standard clauses, and generated reports for quick reference.
 
 ---
 
-## Role of the LLM Wrapper
+## 🏗️ Architecture Stack
 
-The LLM Wrapper ([`src/generation/llm_wrapper.py`](file:///Users/lakshyachuttani/Desktop/SIH/bis-rag/src/generation/llm_wrapper.py)) decouples the core RAG logic from specific LLM providers. By wrapping model instantiation behind a unified `generate(prompt)` interface built on `langchain-core` abstractions:
-- Switch between providers (OpenAI, Google Gemini, Ollama, HuggingFace) by changing `.env` variables (`LLM_PROVIDER`, `LLM_MODEL`).
-- No API keys are hard-coded in project source files.
-- Upstream RAG pipeline components remain untouched when changing models.
-
----
-
-## Project Structure
-
-```
-bis-rag/
-│
-├── data/
-│   ├── raw/                  # Place raw BIS PDF documents here
-│   │   └── .gitkeep
-│   ├── processed/            # Cleaned document JSON/text output
-│   │   └── .gitkeep
-│   └── vectorstore/          # Saved FAISS vector index & metadata
-│       └── .gitkeep
-│
-├── src/
-│   ├── __init__.py
-│   │
-│   ├── ingestion/            # PDF extraction and cleaning
-│   │   ├── __init__.py
-│   │   ├── pdf_loader.py
-│   │   └── document_processor.py
-│   │
-│   ├── chunking/             # Text chunking
-│   │   ├── __init__.py
-│   │   └── text_chunker.py
-│   │
-│   ├── embeddings/           # Dense vector embedding generation
-│   │   ├── __init__.py
-│   │   └── embedding_model.py
-│   │
-│   ├── vectorstore/          # FAISS index management
-│   │   ├── __init__.py
-│   │   └── faiss_store.py
-│   │
-│   ├── retrieval/            # Context retrieval engine
-│   │   ├── __init__.py
-│   │   └── retriever.py
-│   │
-│   ├── generation/           # Prompt formatting & provider-agnostic LLM wrapper
-│   │   ├── __init__.py
-│   │   ├── llm_wrapper.py
-│   │   └── prompt.py
-│   │
-│   ├── pipeline/             # RAG pipeline orchestration
-│   │   ├── __init__.py
-│   │   └── rag_pipeline.py
-│   │
-│   └── config.py             # Central configuration (.env loader)
-│
-├── api/                      # FastAPI Web Server
-│   ├── __init__.py
-│   ├── main.py               # FastAPI app definition & root healthcheck
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   └── query.py           # POST /query endpoint router placeholder
-│   └── schemas/
-│       ├── __init__.py
-│       └── query.py           # Pydantic request & response models
-│
-├── frontend/                 # Future Web UI components
-│   └── .gitkeep
-│
-├── scripts/                  # Workflow scripts
-│   ├── ingest_documents.py
-│   ├── build_embeddings.py
-│   ├── build_vectorstore.py
-│   └── test_retrieval.py
-│
-├── tests/                    # Pytest suite
-│   ├── __init__.py
-│   ├── test_chunking.py
-│   ├── test_embeddings.py
-│   ├── test_retrieval.py
-│   └── test_generation.py
-│
-├── .env
-├── .env.example
-├── .gitignore
-├── requirements.txt
-├── README.md
-└── main.py                   # Root launcher for Uvicorn server
-```
+**Frontend**: React (Vite), Tailwind CSS, Lucide Icons, html2pdf.js  
+**Backend**: FastAPI, Python 3.9+  
+**Agentic AI Flow**: LangGraph, LangChain Core  
+**Database**: MongoDB (via Motor for async NoSQL storage)  
+**Caching**: Redis  
+**Vector Database**: FAISS (SentenceTransformers embeddings)  
+**LLM Providers**: Google Gemini (Fallback support for OpenAI / Ollama via abstracted llm_wrapper.py)
 
 ---
 
-## Environment Setup & Installation
+## 💻 Environment Setup & Installation
 
 ### 1. Prerequisites
 - Python 3.9+ installed.
+- Node.js installed.
+- Docker & Docker Compose (for MongoDB and Redis).
 
-### 2. Virtual Environment Setup
-Navigate to project directory and create `.venv`:
-```bash
-cd bis-rag
+### 2. Start the Backend Infrastructure
+Spin up MongoDB and Redis using Docker Compose:
+`ash
+docker compose up -d
+`
+
+### 3. Start the FastAPI Backend
+`ash
 python3 -m venv .venv
-```
-
-Activate the virtual environment:
-- **macOS / Linux**:
-  ```bash
-  source .venv/bin/activate
-  ```
-- **Windows**:
-  ```cmd
-  .venv\Scripts\activate
-  ```
-
-### 3. Install Dependencies
-```bash
-pip install --upgrade pip
+# Activate venv: source .venv/bin/activate or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
-```
+
+# Create your .env file from the example
+cp .env.example .env
+# Important: Ensure GEMINI_API_KEY and MONGO_URI are set in .env
+
+# Start the server (runs on port 8000)
+uvicorn api.main:app --port 8000
+`
+
+### 4. Start the React Frontend
+Open a new terminal window:
+`ash
+cd frontend
+npm install
+npm run dev
+`
+The application will be accessible at **http://localhost:3000**
+
+*(Alternatively, use the provided start_demo.bat on Windows to launch everything simultaneously!)*
 
 ---
 
-## Document Placement & Workflow
+## 📂 Project Structure Highlights
 
-1. **Place Raw BIS PDFs**: Copy standard PDF files (e.g. `IS_10500_2012.pdf`) into:
-   ```
-   bis-rag/data/raw/
-   ```
-2. **Configuration**: Copy `.env.example` to `.env` and set parameters:
-   ```bash
-   cp .env.example .env
-   ```
-3. **Run Pipeline Stages (Future Pipeline Scripts)**:
-   - `python scripts/ingest_documents.py`
-   - `python scripts/build_embeddings.py`
-   - `python scripts/build_vectorstore.py`
-   - `python scripts/test_retrieval.py`
+- AGENTICragPIPE.py: The core LangGraph state machine driving Intent Classification, Self-Correction, and Retrieval evaluation.
+- pi/routes/: FastAPI endpoints for Chat, Projects, Dashboard, and Auth.
+- pi/services/rag_service.py: Context formatting, Semantic Caching, and Fallback LLM handling.
+- rontend/src/pages/ProjectWorkspace.jsx: The primary interactive workspace UI for chatting and tracking compliance.
+- data/vectorstore/: The persisted FAISS index containing pre-processed BIS PDF text chunks.
 
 ---
 
-## How to Run FastAPI Server
+## 🧪 Quick Demo Script
 
-Using python runner:
-```bash
-python main.py
-```
-Or directly using Uvicorn:
-```bash
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-```
+If you are evaluating this project, try pasting this exact text into a new Workspace Chat for a flawless demonstration of the RAG pipeline handling complex engineering facts:
 
-Interactive API documentation will be accessible at:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+> **"I'm starting a factory to build unfired pressure vessels. Under what specific conditions can a pneumatic pressure test be carried out instead of the standard hydraulic test?"** 
 
-### Sample Query Request:
-```bash
-curl -X POST "http://localhost:8000/query" \
-     -H "Content-Type: application/json" \
-     -d '{"query": "What is the acceptable limit for pH in drinking water?", "top_k": 4}'
-```
-
----
-
-## Testing
-
-Run pytest suite:
-```bash
-pytest
-```
-
----
-
-## Future RAG Implementation Stages
-
-1. **Ingestion & Parsing**: PyMuPDF extraction of tables, text, and clause headers from BIS PDF standards.
-2. **Chunking**: Chunk optimization tailored to technical standard clauses.
-3. **Embedding Generation**: Indexing chunks into FAISS vector store using domain-specific embedding models.
-4. **Hybrid Retrieval**: Dense similarity search + BM25 keyword matching for exact standard clause codes.
-5. **Generation & UI**: Connecting live LLM generation layer and building interactive Web UI frontend.
+*(The Agent will intelligently scan IS 2825 and accurately extract the strict safety clauses preventing water testing!)*
